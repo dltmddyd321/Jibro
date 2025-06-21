@@ -1,5 +1,6 @@
 package com.windrr.jibrro.presentation.di
 
+import com.windrr.jibrro.data.api.SubwayApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,9 +33,13 @@ class NetworkModule {
         okHttpClient: OkHttpClient
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://swopenAPI.seoul.go.kr/api/subway/")
+            .baseUrl("http://swopenAPI.seoul.go.kr/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+
+    @Provides
+    @Singleton
+    fun provideSubwayApiService(retrofit: Retrofit): SubwayApiService = retrofit.create(SubwayApiService::class.java)
 }
