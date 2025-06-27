@@ -1,0 +1,28 @@
+package com.windrr.jibrro.presentation.di
+
+import android.content.Context
+import com.windrr.jibrro.data.respository.StationRepository
+import com.windrr.jibrro.data.respository.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+
+    @Provides
+    fun provideStationAssetDataSource(@ApplicationContext context: Context): StationAssetDataSource {
+        return StationAssetDataSource(context)
+    }
+
+    @Provides
+    fun provideSubwayStationRepository(
+        dataSource: StationAssetDataSource
+    ): StationRepository {
+        return SubwayStationRepositoryImpl(dataSource)
+    }
+}
