@@ -9,8 +9,8 @@ interface SubwayApiService {
     @GET("api/subway/{apiKey}/xml/realtimeStationArrival/{startIndex}/{endIndex}/{stationName}")
     fun getSubwayArrivalData(
         @Path("KEY") apiKey: String,
-        @Path("START_INDEX") startIndex: Int,
-        @Path("END_INDEX") endIndex: Int,
+        @Path("START_INDEX") startIndex: Int = 0,
+        @Path("END_INDEX") endIndex: Int = 5,
         @Path("statnNm") statnNm: String
     ): Response<SubwayArrivalResponse>
 }

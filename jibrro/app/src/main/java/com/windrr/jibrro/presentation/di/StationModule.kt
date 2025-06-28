@@ -2,7 +2,7 @@ package com.windrr.jibrro.presentation.di
 
 import android.content.Context
 import com.windrr.jibrro.data.respository.StationRepository
-import com.windrr.jibrro.data.respository.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
 import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
 import dagger.Module
 import dagger.Provides
