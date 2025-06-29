@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.play.services.location)
     val retrofitVersion = "2.9.0"
     implementation("com.squareup.retrofit2:converter-simplexml:$retrofitVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
