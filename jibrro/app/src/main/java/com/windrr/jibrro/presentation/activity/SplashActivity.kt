@@ -4,7 +4,10 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.audiofx.BassBoost
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,13 +19,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
+import com.windrr.jibrro.presentation.component.PermissionRequiredDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 @SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
@@ -30,6 +37,7 @@ class SplashActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationHelper: LocationHelper
+    private val showPermissionDialog = mutableStateOf(false)
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -52,6 +60,17 @@ class SplashActivity : ComponentActivity() {
                         name = "Android",
                         modifier = Modifier.padding(innerPadding)
                     )
+                    if (showPermissionDialog.value) {
+                        val context = LocalContext.current
+                        PermissionRequiredDialog(
+                            onClick = {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = "package:${context.packageName}".toUri()
+                                }
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -64,7 +83,6 @@ class SplashActivity : ComponentActivity() {
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // 권한 있음 → 위치 요청
                 requestLastLocation()
             }
 
@@ -83,18 +101,19 @@ class SplashActivity : ComponentActivity() {
         locationHelper.getLastLocation(
             onSuccess = { lat, lon ->
                 Log.d("SplashActivity", "위치: lat=$lat, lon=$lon")
-                // TODO: 위치 기반 초기 작업 처리
-                start()
+                start(lat, lon)
             },
-            onFailure = { error ->
-                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-                start()
+            onFailure = {
+                showPermissionDialog.value = true
             }
         )
     }
 
-    private fun start() {
-        startActivity(Intent(this, MainActivity::class.java))
+    private fun start(lat: Double, lon: Double) {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra("lat", lat)
+        intent.putExtra("lon", lon)
+        startActivity(intent)
         finish()
     }
 }
