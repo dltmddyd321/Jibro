@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -62,12 +63,18 @@ class SplashActivity : ComponentActivity() {
                     )
                     if (showPermissionDialog.value) {
                         val context = LocalContext.current
+                        val settingsLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.StartActivityForResult()
+                        ) {
+                            checkLocationPermissionAndFetch()
+                        }
                         PermissionRequiredDialog(
                             onClick = {
-                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = "package:${context.packageName}".toUri()
-                                }
-                                context.startActivity(intent)
+                                val intent =
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = "package:${context.packageName}".toUri()
+                                    }
+                                settingsLauncher.launch(intent)
                             }
                         )
                     }
@@ -115,5 +122,10 @@ class SplashActivity : ComponentActivity() {
         intent.putExtra("lon", lon)
         startActivity(intent)
         finish()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkLocationPermissionAndFetch()
     }
 }
