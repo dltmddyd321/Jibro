@@ -88,9 +88,9 @@ class SplashActivity : ComponentActivity() {
 
     private fun requestLastLocation() {
         locationHelper.getLastLocation(
-            onSuccess = { lat, lon ->
-                Log.d("SplashActivity", "위치: lat=$lat, lon=$lon")
-                start(lat, lon)
+            onSuccess = { lat, lng ->
+                Log.d("SplashActivity", "위치: lat=$lat, lng=$lng")
+                start(lat, lng)
             },
             onFailure = {
                 showPermissionDialog.value = true
@@ -98,10 +98,10 @@ class SplashActivity : ComponentActivity() {
         )
     }
 
-    private fun start(lat: Double, lon: Double) {
+    private fun start(lat: Double, lng: Double) {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("lat", lat)
-        intent.putExtra("lon", lon)
+        intent.putExtra("lng", lng)
         startActivity(intent)
         finish()
     }
