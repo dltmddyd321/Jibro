@@ -4,8 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.audiofx.BassBoost
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -15,22 +13,20 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.component.PermissionRequiredDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 @SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
@@ -40,44 +36,30 @@ class SplashActivity : ComponentActivity() {
     lateinit var locationHelper: LocationHelper
     private val showPermissionDialog = mutableStateOf(false)
 
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            requestLastLocation()
-        } else {
-            Toast.makeText(this, "권한이 거부되었습니다", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             JibrroTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                    if (showPermissionDialog.value) {
-                        val context = LocalContext.current
-                        val settingsLauncher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.StartActivityForResult()
-                        ) {
-                            checkLocationPermissionAndFetch()
-                        }
-                        PermissionRequiredDialog(
-                            onClick = {
-                                val intent =
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = "package:${context.packageName}".toUri()
-                                    }
-                                settingsLauncher.launch(intent)
-                            }
-                        )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                if (showPermissionDialog.value) {
+                    val context = LocalContext.current
+                    val settingsLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.StartActivityForResult()
+                    ) {
+                        checkLocationPermissionAndFetch()
                     }
+                    PermissionRequiredDialog(
+                        onClick = {
+                            val intent =
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = "package:${context.packageName}".toUri()
+                                }
+                            settingsLauncher.launch(intent)
+                        }
+                    )
                 }
             }
         }
@@ -95,11 +77,11 @@ class SplashActivity : ComponentActivity() {
 
             shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
-                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                showPermissionDialog.value = true
             }
 
             else -> {
-                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                showPermissionDialog.value = true
             }
         }
     }
@@ -122,10 +104,5 @@ class SplashActivity : ComponentActivity() {
         intent.putExtra("lon", lon)
         startActivity(intent)
         finish()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        checkLocationPermissionAndFetch()
     }
 }
