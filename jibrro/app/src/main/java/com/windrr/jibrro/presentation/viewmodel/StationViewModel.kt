@@ -1,11 +1,13 @@
 package com.windrr.jibrro.presentation.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.windrr.jibrro.data.model.SubwayStation
+import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -18,20 +20,22 @@ class StationViewModel @Inject constructor(
     private val getSubwayStationsUseCase: GetStationListUseCase
 ) : ViewModel() {
 
-    private val _stations = MutableLiveData<List<SubwayStation>>()
-    val stations: LiveData<List<SubwayStation>> = _stations
+    private val _closestStation = MutableStateFlow<String?>(null)
+    val closestStation: StateFlow<String?> = _closestStation.asStateFlow()
 
-    init {
-        loadStations()
-    }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private fun loadStations() {
-        _stations.value = getSubwayStationsUseCase()
-    }
+    fun findClosestStation(lat: Double, lng: Double) {
+        viewModelScope.launch {
+            _isLoading.value = true
 
-    fun findClosestStation(currentLat: Double, currentLon: Double): SubwayStation? {
-        return _stations.value?.minByOrNull {
-            distanceInMeters(currentLat, currentLon, it.lat, it.lng)
+            val stations = getSubwayStationsUseCase()
+            val closest = stations.minByOrNull {
+                distanceInMeters(lat, lng, it.lat, it.lng)
+            }
+            _closestStation.value = closest?.name
+            _isLoading.value = false
         }
     }
 
