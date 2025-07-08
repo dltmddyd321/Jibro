@@ -2,6 +2,7 @@ package com.windrr.jibrro.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,9 @@ class StationViewModel @Inject constructor(
     private val getSubwayStationsUseCase: GetStationListUseCase
 ) : ViewModel() {
 
+    private val _allStation = MutableStateFlow<List<SubwayStation>>(emptyList())
+    val allStation: StateFlow<List<SubwayStation>> = _allStation.asStateFlow()
+
     private val _closestStation = MutableStateFlow<String?>(null)
     val closestStation: StateFlow<String?> = _closestStation.asStateFlow()
 
@@ -35,6 +39,15 @@ class StationViewModel @Inject constructor(
                 distanceInMeters(lat, lng, it.lat, it.lng)
             }
             _closestStation.value = closest?.name
+            _isLoading.value = false
+        }
+    }
+
+    fun fetchStationList() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val stations = getSubwayStationsUseCase()
+            _allStation.value = stations
             _isLoading.value = false
         }
     }

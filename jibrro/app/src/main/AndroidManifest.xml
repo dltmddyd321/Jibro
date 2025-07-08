@@ -18,10 +18,14 @@
         android:theme="@style/Theme.Jibrro"
         tools:targetApi="31">
         <activity
+            android:name=".presentation.activity.LikeStationActivity"
+            android:exported="false"
+            android:label="@string/title_activity_like_station"
+            android:theme="@style/Theme.Jibrro" />
+        <activity
             android:name=".presentation.activity.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.Jibrro">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
