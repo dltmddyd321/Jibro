@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,7 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
@@ -83,13 +83,20 @@ class MainActivity : ComponentActivity() {
         val scope = rememberCoroutineScope()
         DismissibleNavigationDrawer(
             drawerState = drawerState, drawerContent = {
-                ModalDrawerSheet {
+                ModalDrawerSheet(
+                    modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp * 2 / 3)
+                ) {
                     Text(
                         "즐겨찾기", modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
                                 scope.launch { drawerState.close() }
-                                startActivity(Intent(this@MainActivity, LikeStationActivity::class.java))
+                                startActivity(
+                                    Intent(
+                                        this@MainActivity,
+                                        LikeStationActivity::class.java
+                                    )
+                                )
                             }
                             .padding(16.dp))
                     Text(
