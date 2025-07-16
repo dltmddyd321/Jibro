@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.respository
+package com.windrr.jibrro.domain.repository
 
 import com.windrr.jibrro.data.model.SubwayStation
 
