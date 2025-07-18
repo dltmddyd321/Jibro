@@ -2,7 +2,7 @@ package com.windrr.jibrro.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.windrr.jibrro.data.model.SubwayArrival
+import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 class SubwayArrivalDataViewModel @Inject constructor(
     private val getSubwayArrivalDataUseCase: GetSubwayArrivalDataUseCase
 ) : ViewModel() {
-    private val _arrivalState = MutableStateFlow<Result<List<SubwayArrival>>>(Result.Loading())
-    val arrivalState: StateFlow<Result<List<SubwayArrival>>> = _arrivalState.asStateFlow()
+    private val _arrivalState = MutableStateFlow<Result<List<RealtimeArrival>>>(Result.Loading())
+    val arrivalState: StateFlow<Result<List<RealtimeArrival>>> = _arrivalState.asStateFlow()
 
     fun getSubwayArrival(statnNm: String) {
         viewModelScope.launch {

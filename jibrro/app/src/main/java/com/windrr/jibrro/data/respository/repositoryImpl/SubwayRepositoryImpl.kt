@@ -1,6 +1,6 @@
 package com.windrr.jibrro.data.respository.repositoryImpl
 
-import com.windrr.jibrro.data.model.SubwayArrival
+import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayArrivalResponse
 import com.windrr.jibrro.data.respository.datasource.SubwayArrivalRemoteDataSource
 import com.windrr.jibrro.data.util.Result
@@ -10,10 +10,10 @@ import retrofit2.Response
 class SubwayRepositoryImpl(
     private val newsRemoteDataSource: SubwayArrivalRemoteDataSource
 ): SubwayRepository {
-    private fun convertToSubwayArrivalData(response: Response<SubwayArrivalResponse>): Result<List<SubwayArrival>> {
+    private fun convertToSubwayArrivalData(response: Response<SubwayArrivalResponse>): Result<List<RealtimeArrival>> {
         if (response.isSuccessful) {
             response.body()?.let { result ->
-                return Result.Success(result.rows ?: emptyList())
+                return Result.Success(result.realtimeArrivalList ?: emptyList())
             }
         }
         return Result.Error(response.message())
@@ -22,7 +22,7 @@ class SubwayRepositoryImpl(
     override suspend fun getSubwayArrivalData(
         apiKey: String,
         statnNm: String
-    ): Result<List<SubwayArrival>> {
+    ): Result<List<RealtimeArrival>> {
         return convertToSubwayArrivalData(newsRemoteDataSource.getSubwayArrivalData(apiKey, statnNm))
     }
 }

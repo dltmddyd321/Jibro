@@ -6,11 +6,11 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface SubwayApiService {
-    @GET("api/subway/{apiKey}/xml/realtimeStationArrival/{startIndex}/{endIndex}/{stationName}")
-    fun getSubwayArrivalData(
-        @Path("KEY") apiKey: String,
-        @Path("START_INDEX") startIndex: Int = 0,
-        @Path("END_INDEX") endIndex: Int = 5,
+    @GET("api/subway/{KEY}/json/realtimeStationArrival/{START_INDEX}/{END_INDEX}/{statnNm}")
+    suspend fun getSubwayArrivalData(
+        @Path("KEY") KEY: String,
+        @Path("START_INDEX") START_INDEX: Int = 0,
+        @Path("END_INDEX") END_INDEX: Int = 5,
         @Path("statnNm") statnNm: String
     ): Response<SubwayArrivalResponse>
 }

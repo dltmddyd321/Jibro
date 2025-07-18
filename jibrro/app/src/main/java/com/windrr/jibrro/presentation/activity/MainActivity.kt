@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -74,30 +75,36 @@ class MainActivity : ComponentActivity() {
                     if (isSubwayLoading) {
                         CircularProgressIndicator()
                     } else {
-                        Text(
-                            text = stationName ?: "지하철역을 찾을 수 없습니다.",
-                            style = MaterialTheme.typography.titleLarge
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = stationName ?: "지하철역을 찾을 수 없습니다.",
+                                style = MaterialTheme.typography.titleLarge
+                            )
 
-                        when (arrivalState) {
-                            is Result.Success -> {
-                                val arrival = arrivalState.data?.firstOrNull()
-                                Text(
-                                    text = arrival?.toString() ?: "도착 정보 없음",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
+                            when (arrivalState) {
+                                is Result.Success -> {
+                                    val arrival = arrivalState.data?.firstOrNull()
+                                    Text(
+                                        text = arrival?.toString() ?: "도착 정보 없음",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
 
-                            is Result.Error -> {
-                                Text(
-                                    text = arrivalState.message ?: "도착 정보 불러오기 실패",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Red
-                                )
-                            }
+                                is Result.Error -> {
+                                    Text(
+                                        text = arrivalState.message ?: "도착 정보 불러오기 실패",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Red
+                                    )
+                                }
 
-                            is Result.Loading -> {
-                                CircularProgressIndicator()
+                                is Result.Loading -> {
+                                    CircularProgressIndicator()
+                                }
                             }
                         }
                     }
