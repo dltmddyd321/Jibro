@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -99,14 +101,23 @@ class MainActivity : ComponentActivity() {
                             when (arrivalState) {
                                 is Result.Success -> {
                                     val arrivalList = arrivalState.data ?: emptyList()
-                                    LazyColumn {
-                                        items(arrivalList) { arrival ->
-                                            SubwayArrivalItem(
-                                                updnLine = arrival.updnLine,
-                                                arvlMsg2 = arrival.arvlMsg2,
-                                                trainLineNm = arrival.trainLineNm
-                                            )
-                                            Divider()
+                                    if (arrivalList.isEmpty()) {
+                                        Text(
+                                            text = "도착 예정 정보 없음",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.Red
+                                        )
+                                    } else {
+                                        LazyColumn {
+                                            items(arrivalList) { arrival ->
+                                                SubwayArrivalItem(
+                                                    updnLine = arrival.updnLine,
+                                                    arvlMsg2 = arrival.arvlMsg2,
+                                                    trainLineNm = arrival.trainLineNm,
+                                                    lstcarAt = arrival.lstcarAt
+                                                )
+                                                Divider()
+                                            }
                                         }
                                     }
                                 }
@@ -209,6 +220,7 @@ fun SubwayArrivalItem(
     updnLine: String,
     arvlMsg2: String,
     trainLineNm: String,
+    lstcarAt: String,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -226,12 +238,29 @@ fun SubwayArrivalItem(
                 .padding(end = 12.dp)
         )
 
-        Column {
-            Text(
-                text = arvlMsg2,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = arvlMsg2,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                if (lstcarAt == "1") {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "막차",
+                            color = Color.Red,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
             Text(
                 text = trainLineNm,
                 fontSize = 14.sp,
