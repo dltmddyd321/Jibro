@@ -37,6 +37,7 @@
             android:name=".presentation.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Jibrro" />
+        <receiver android:name=".presentation.alarm.AlarmReceiver" android:exported="false" />
     </application>
 
 </manifest>

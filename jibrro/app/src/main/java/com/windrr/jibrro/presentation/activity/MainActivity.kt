@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -179,7 +180,13 @@ class MainActivity : ComponentActivity() {
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text("드로어 예제") },
+                        title = {
+                            Image(
+                                painter = painterResource(id = R.drawable.jibro_text),
+                                contentDescription = "Jibro",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        },
                         navigationIcon = {
                             IconButton(onClick = {
                                 scope.launch { drawerState.open() }
