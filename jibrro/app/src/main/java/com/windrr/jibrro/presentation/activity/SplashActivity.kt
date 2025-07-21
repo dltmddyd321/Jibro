@@ -2,8 +2,11 @@ package com.windrr.jibrro.presentation.activity
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -24,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
+import com.windrr.jibrro.presentation.component.AlarmPermissionModal
 import com.windrr.jibrro.presentation.component.PermissionRequiredDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -32,9 +36,36 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
 
+    override fun onResume() {
+        super.onResume()
+        if (isAlarmPermissionGranted()) {
+            showAlarmPermissionModal.value = false
+            start(lat, lng)
+        }
+    }
+
+    private fun isAlarmPermissionGranted(): Boolean {
+        val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else true
+
+        val hasExactAlarmPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager.canScheduleExactAlarms()
+        } else true
+
+        return hasNotificationPermission && hasExactAlarmPermission
+    }
+
     @Inject
     lateinit var locationHelper: LocationHelper
     private val showPermissionDialog = mutableStateOf(false)
+    private val showAlarmPermissionModal = mutableStateOf(false)
+    private var lat = 0.0
+    private var lng = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +89,14 @@ class SplashActivity : ComponentActivity() {
                                     data = "package:${context.packageName}".toUri()
                                 }
                             settingsLauncher.launch(intent)
+                        }
+                    )
+                }
+                if (showAlarmPermissionModal.value) {
+                    AlarmPermissionModal(
+                        onGranted = {
+                            showAlarmPermissionModal.value = false
+                            start(lat, lng)
                         }
                     )
                 }
@@ -90,7 +129,9 @@ class SplashActivity : ComponentActivity() {
         locationHelper.getLastLocation(
             onSuccess = { lat, lng ->
                 Log.d("SplashActivity", "위치: lat=$lat, lng=$lng")
-                start(lat, lng)
+                if (!isAlarmPermissionGranted()) showAlarmPermissionModal.value = true
+                this.lat = lat
+                this.lng = lng
             },
             onFailure = {
                 showPermissionDialog.value = true
