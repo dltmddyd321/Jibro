@@ -2,6 +2,7 @@ package com.windrr.jibrro.presentation.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -81,6 +82,7 @@ class MainActivity : ComponentActivity() {
                 val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
 
                 LaunchedEffect(stationName) {
+                    Log.d("TAG", "stationName: $stationName")
                     stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
                 }
 
@@ -114,7 +116,8 @@ class MainActivity : ComponentActivity() {
                                                     updnLine = arrival.updnLine,
                                                     arvlMsg2 = arrival.arvlMsg2,
                                                     trainLineNm = arrival.trainLineNm,
-                                                    lstcarAt = arrival.lstcarAt
+                                                    lstcarAt = arrival.lstcarAt,
+                                                    subwayId = arrival.subwayId
                                                 )
                                                 Divider()
                                             }
@@ -223,55 +226,69 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SubwayArrivalItem(
+    subwayId: String,
     updnLine: String,
     arvlMsg2: String,
     trainLineNm: String,
     lstcarAt: String,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
+            .fillMaxWidth()
             .padding(8.dp)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        val iconRes = if (updnLine == "상행") R.drawable.up_line else R.drawable.down_line
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = "$updnLine 아이콘",
-            modifier = Modifier
-                .size(40.dp)
-                .padding(end = 12.dp)
-        )
+        Column {
+            Text(
+                text = SubwayLineMap.getNameById(subwayId),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
 
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = arvlMsg2,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val iconRes = if (updnLine == "상행") R.drawable.up_line else R.drawable.down_line
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = "$updnLine 아이콘",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 12.dp)
                 )
-                if (lstcarAt == "1") {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "막차",
-                            color = Color.Red,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = arvlMsg2,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = trainLineNm,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                 }
             }
-            Text(
-                text = trainLineNm,
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+        }
+
+        if (lstcarAt == "1") {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "막차",
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
