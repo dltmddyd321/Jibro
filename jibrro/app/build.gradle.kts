@@ -52,7 +52,9 @@ android {
 }
 
 dependencies {
+    implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.room:room-runtime:2.7.1")
+    implementation(libs.androidx.work.runtime.ktx)
     kapt("androidx.room:room-compiler:2.7.1")
     implementation(libs.play.services.location)
     val retrofitVersion = "2.9.0"
