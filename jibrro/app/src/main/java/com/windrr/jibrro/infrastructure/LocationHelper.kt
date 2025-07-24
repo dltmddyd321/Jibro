@@ -7,6 +7,7 @@ import android.location.Location
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -46,4 +47,33 @@ class LocationHelper @Inject constructor(
                 onFailure("오류: ${it.message}")
             }
     }
+
+    suspend fun getLastLocationSuspend(): Pair<Double, Double>? =
+        suspendCancellableCoroutine { cont ->
+            if (
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                cont.resume(null)
+                return@suspendCancellableCoroutine
+            }
+
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        cont.resume(location.latitude to location.longitude)
+                    } else {
+                        cont.resume(null)
+                    }
+                }
+                .addOnFailureListener {
+                    cont.resume(null)
+                }
+        }
 }
