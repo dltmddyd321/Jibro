@@ -45,7 +45,11 @@ class JibroWorker @AssistedInject constructor(
         val stationName = closest?.name.orEmpty()
         Log.d("JibroWorker", "가장 가까운 역: $stationName")
 
-        val arrivalDataList = getSubwayArrivalDataUseCase.execute(statnNm = stationName)
+        val arrivalDataList = getSubwayArrivalDataUseCase.execute(statnNm = stationName).data ?: emptyList()
+
+        if (arrivalDataList.all { it.lstcarAt == "1" }) {
+            registerAlarmUseCase.invoke(System.currentTimeMillis())
+        }
 
         return Result.success()
     }
