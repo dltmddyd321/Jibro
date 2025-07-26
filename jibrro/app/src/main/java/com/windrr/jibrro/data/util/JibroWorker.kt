@@ -37,7 +37,7 @@ class JibroWorker @AssistedInject constructor(
 
         val (lat, lng) = location
 
-        val stations = getStationListUseCase() // suspend-safe
+        val stations = getStationListUseCase()
         val closest = stations.minByOrNull {
             distanceInMeters(lat, lng, it.lat, it.lng)
         }

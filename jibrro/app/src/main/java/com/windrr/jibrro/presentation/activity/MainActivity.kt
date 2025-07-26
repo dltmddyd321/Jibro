@@ -175,6 +175,12 @@ class MainActivity : ComponentActivity() {
                             .fillMaxWidth()
                             .clickable {
                                 scope.launch { drawerState.close() }
+                                startActivity(
+                                    Intent(
+                                        this@MainActivity,
+                                        SettingsActivity::class.java
+                                    )
+                                )
                             }
                             .padding(16.dp))
                 }

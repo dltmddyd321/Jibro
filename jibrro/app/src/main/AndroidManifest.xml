@@ -22,6 +22,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".presentation.activity.SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.Jibrro" />
+        <activity
             android:name=".presentation.activity.LikeStationActivity"
             android:exported="false"
             android:label="@string/title_activity_like_station"
@@ -40,7 +45,10 @@
             android:name=".presentation.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Jibrro" />
-        <receiver android:name=".presentation.alarm.AlarmReceiver" android:exported="false" />
+
+        <receiver
+            android:name=".presentation.alarm.AlarmReceiver"
+            android:exported="false" />
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
@@ -49,6 +57,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
