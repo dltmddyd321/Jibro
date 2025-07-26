@@ -1,5 +1,6 @@
 package com.windrr.jibrro.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.data.model.SubwayStation
@@ -35,6 +36,8 @@ class StationViewModel @Inject constructor(
             _isLoading.value = true
 
             val stations = getSubwayStationsUseCase()
+
+            Log.d("StationViewModel", "stations: $stations")
             val closest = stations.minByOrNull {
                 distanceInMeters(lat, lng, it.lat, it.lng)
             }

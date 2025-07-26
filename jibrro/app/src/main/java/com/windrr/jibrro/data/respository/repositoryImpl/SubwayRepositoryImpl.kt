@@ -13,7 +13,7 @@ class SubwayRepositoryImpl(
     private fun convertToSubwayArrivalData(response: Response<SubwayArrivalResponse>): Result<List<RealtimeArrival>> {
         if (response.isSuccessful) {
             response.body()?.let { result ->
-                return Result.Success(result.realtimeArrivalList ?: emptyList())
+                return Result.Success(result.realtimeArrivalList)
             }
         }
         return Result.Error(response.message())

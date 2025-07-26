@@ -56,14 +56,7 @@ class SettingsActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         TopAppBar(
-                            title = {
-                                Image(
-                                    painter = painterResource(id = R.drawable.jibro_text),
-                                    contentDescription = "Jibro",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentScale = ContentScale.Fit
-                                )
-                            },
+                            title = {},
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
                                     Icon(
