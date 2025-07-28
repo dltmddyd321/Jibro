@@ -129,9 +129,17 @@ class SplashActivity : ComponentActivity() {
         locationHelper.getLastLocation(
             onSuccess = { lat, lng ->
                 Log.d("SplashActivity", "위치: lat=$lat, lng=$lng")
-                if (!isAlarmPermissionGranted()) showAlarmPermissionModal.value = true
-                this.lat = lat
-                this.lng = lng
+                if (lat == 0.0 && lng == 0.0) {
+                    showPermissionDialog.value = true
+                } else {
+                    if (!isAlarmPermissionGranted()) {
+                        showAlarmPermissionModal.value = true
+                    } else {
+                        start(lat, lng)
+                    }
+                    this.lat = lat
+                    this.lng = lng
+                }
             },
             onFailure = {
                 showPermissionDialog.value = true
