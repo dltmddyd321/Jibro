@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.android.gms.ads.MobileAds
 import com.windrr.jibrro.data.util.JibroWorker
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -19,6 +20,7 @@ class AppCore : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        MobileAds.initialize(this)
         val request = PeriodicWorkRequestBuilder<JibroWorker>(
             15, TimeUnit.MINUTES
         ).build()

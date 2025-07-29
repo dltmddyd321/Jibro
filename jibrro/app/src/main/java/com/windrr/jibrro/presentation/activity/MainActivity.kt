@@ -13,8 +13,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.presentation.component.BannerAdView
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SubwayArrivalDataViewModel
@@ -88,13 +91,24 @@ class MainActivity : ComponentActivity() {
 
                 MainDrawerScreen(stationName) {
                     if (isSubwayLoading) {
-                        CircularProgressIndicator()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            BannerAdView()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                        }
                     } else {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(16.dp)
                         ) {
+                            BannerAdView()
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             Text(
                                 text = stationName ?: "지하철역을 찾을 수 없습니다.",
                                 style = MaterialTheme.typography.titleLarge
