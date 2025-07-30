@@ -46,39 +46,40 @@ class LikeStationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-//            JibrroTheme {
-//
-//                Scaffold(
-//                    modifier = Modifier.fillMaxSize(),
-//                    topBar = {
-//                        TopAppBar(
-//                            title = {
-//                                Text(
-//                                    text = "즐겨찾기",
-//                                    style = MaterialTheme.typography.titleMedium
-//                                )
-//                            },
-//                            navigationIcon = {
-//                                IconButton(onClick = { finish() }) {
-//                                    Icon(
-//                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                                        contentDescription = "뒤로 가기"
-//                                    )
-//                                }
-//                            }
-//                        )
-//                    }
-//                ) { innerPadding ->
-//                    if (isLoading) {
-//                        CircularProgressIndicator()
-//                    } else {
-//                        StationListScreen(
-//                            stations = stationList,
-//                            modifier = Modifier.padding(innerPadding)
-//                        )
-//                    }
-//                }
-//            }
+            JibrroTheme {
+                val stationList by stationViewModel.stationList.collectAsState()
+                val isLoading by stationViewModel.isLoading.collectAsState()
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = "즐겨찾기",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = { finish() }) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "뒤로 가기"
+                                    )
+                                }
+                            }
+                        )
+                    }
+                ) { innerPadding ->
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        StationListScreen(
+                            stations = stationList,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+            }
         }
     }
 

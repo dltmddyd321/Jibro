@@ -28,12 +28,20 @@ class StationViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _stationList = MutableStateFlow<List<SubwayStation>>(emptyList())
+    val stationList: StateFlow<List<SubwayStation>> = _stationList.asStateFlow()
+
+    init {
+        val stations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
+        _stationList.value = stations
+    }
+
     fun findClosestStation(lat: Double, lng: Double) {
         viewModelScope.launch {
             _isLoading.value = true
 
-            val stations = getSubwayStationsUseCase()
-                .filter { it.lat != 0.0 && it.lng != 0.0 }
+            val stations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
+            _stationList.value = stations
 
             Log.d("StationViewModel", "Valid stations count: ${stations.size}")
             Log.d("StationViewModel", "Finding closest station to: ($lat, $lng)")
