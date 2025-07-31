@@ -31,9 +31,18 @@ class StationViewModel @Inject constructor(
     private val _stationList = MutableStateFlow<List<SubwayStation>>(emptyList())
     val stationList: StateFlow<List<SubwayStation>> = _stationList.asStateFlow()
 
+    private val _allStations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
+
     init {
-        val stations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-        _stationList.value = stations
+        _stationList.value = _allStations
+    }
+
+    fun findStationByName(name: String) {
+        _stationList.value = if (name.isBlank()) {
+            _allStations
+        } else {
+            _allStations.filter { it.name.contains(name) }
+        }
     }
 
     fun findClosestStation(lat: Double, lng: Double) {
@@ -41,7 +50,6 @@ class StationViewModel @Inject constructor(
             _isLoading.value = true
 
             val stations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-            _stationList.value = stations
 
             Log.d("StationViewModel", "Valid stations count: ${stations.size}")
             Log.d("StationViewModel", "Finding closest station to: ($lat, $lng)")

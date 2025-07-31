@@ -7,19 +7,25 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,10 +33,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
@@ -49,6 +59,8 @@ class LikeStationActivity : ComponentActivity() {
             JibrroTheme {
                 val stationList by stationViewModel.stationList.collectAsState()
                 val isLoading by stationViewModel.isLoading.collectAsState()
+                var searchQuery by remember { mutableStateOf("") }
+                val focusManager = LocalFocusManager.current
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -70,13 +82,48 @@ class LikeStationActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    if (isLoading) {
-                        CircularProgressIndicator()
-                    } else {
-                        StationListScreen(
-                            stations = stationList,
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
+                                placeholder = { Text("지하철역 검색") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions.Default.copy(
+                                    imeAction = ImeAction.Search
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onSearch = {
+                                        // 검색 버튼 누르면 실행
+                                        stationViewModel.findStationByName(searchQuery)
+                                        focusManager.clearFocus()
+                                    }
+                                )
+                            )
+                            Button(onClick = {
+                                stationViewModel.findStationByName(searchQuery)
+                            }) {
+                                Text("검색")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                        } else {
+                            StationListScreen(
+                                stations = stationList,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
