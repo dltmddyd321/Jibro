@@ -1,6 +1,7 @@
 package com.windrr.jibrro.presentation.activity
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -42,14 +44,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.windrr.jibrro.data.model.CheckStation
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
+import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class LikeStationActivity : ComponentActivity() {
     private val stationViewModel: StationViewModel by viewModels()
+    private val checkStationViewModel: CheckStationViewModel by viewModels()
+    private val checkedStates = mutableStateMapOf<String, Boolean>()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +82,32 @@ class LikeStationActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "뒤로 가기"
+                                    )
+                                }
+                            },
+                            actions = {
+                                TextButton(onClick = {
+                                    val checkedStationList = stationList.filter {
+                                        checkedStates[it.bldn_id] == true
+                                    }.map {
+                                        CheckStation(
+                                            id = it.bldn_id,
+                                            name = it.name,
+                                            line = it.line
+                                        )
+                                    }
+                                    checkStationViewModel.saveCheckedStationList(checkedStationList)
+                                    Toast.makeText(
+                                        this@LikeStationActivity,
+                                        "저장되었습니다",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    finish()
+                                }) {
+                                    Text(
+                                        text = "저장",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -135,8 +167,6 @@ class LikeStationActivity : ComponentActivity() {
         stations: List<SubwayStation>,
         modifier: Modifier = Modifier
     ) {
-        val checkedStates = remember { mutableStateMapOf<String, Boolean>() }
-
         LazyColumn(modifier = modifier.fillMaxSize()) {
             items(stations) { station ->
                 val stationId = station.bldn_id
