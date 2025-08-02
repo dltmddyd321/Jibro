@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,6 +53,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.presentation.component.BannerAdView
@@ -80,13 +84,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             JibrroTheme {
 
+                val lifecycleOwner = LocalLifecycleOwner.current
                 val stationName by stationViewModel.closestStation.collectAsState()
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
                 val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
 
-                LaunchedEffect(stationName) {
-                    Log.d("TAG", "stationName: $stationName")
-                    stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
+                DisposableEffect(lifecycleOwner, stationName) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_START) {
+                            stationName?.let {
+                                subwayArrivalViewModel.getSubwayArrival(it)
+                            }
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
 
                 MainDrawerScreen(stationName) {
@@ -218,7 +232,6 @@ class MainActivity : ComponentActivity() {
                         },
                         actions = {
                             IconButton(onClick = {
-                                // 동기화 동작 수행
                                 stationName?.let {
                                     subwayArrivalViewModel.getSubwayArrival(it)
                                 }
@@ -242,72 +255,72 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
-@Composable
-fun SubwayArrivalItem(
-    subwayId: String,
-    updnLine: String,
-    arvlMsg2: String,
-    trainLineNm: String,
-    lstcarAt: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+    @Composable
+    fun SubwayArrivalItem(
+        subwayId: String,
+        updnLine: String,
+        arvlMsg2: String,
+        trainLineNm: String,
+        lstcarAt: String,
+        modifier: Modifier = Modifier
     ) {
-        Column {
-            Text(
-                text = SubwayLineMap.getNameById(subwayId),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val iconRes = if (updnLine == "상행") R.drawable.up_line else R.drawable.down_line
-                Image(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = "$updnLine 아이콘",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .padding(end = 12.dp)
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Column {
+                Text(
+                    text = SubwayLineMap.getNameById(subwayId),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = arvlMsg2,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val iconRes = if (updnLine == "상행") R.drawable.up_line else R.drawable.down_line
+                    Image(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = "$updnLine 아이콘",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(end = 12.dp)
                     )
-                    Text(
-                        text = trainLineNm,
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = arvlMsg2,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = trainLineNm,
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
             }
-        }
 
-        if (lstcarAt == "1") {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "막차",
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
-                )
+            if (lstcarAt == "1") {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "막차",
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     }
