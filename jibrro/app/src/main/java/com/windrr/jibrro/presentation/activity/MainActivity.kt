@@ -325,7 +325,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun formatArrivalMessage(raw: String): String {
+    private fun formatArrivalMessage(raw: String): String {
         var result = raw
 
         // 1. "[숫자]" 형식 괄호 제거

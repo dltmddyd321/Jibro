@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -55,7 +56,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class LikeStationActivity : ComponentActivity() {
     private val stationViewModel: StationViewModel by viewModels()
     private val checkStationViewModel: CheckStationViewModel by viewModels()
-    private val checkedStates = mutableStateMapOf<String, Boolean>()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,10 +63,20 @@ class LikeStationActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             JibrroTheme {
+
+                LaunchedEffect(Unit) {
+                    checkStationViewModel.fetchCheckedStationList()
+                }
+
+                val checkedStations by checkStationViewModel.checkStationList.collectAsState()
+                val checkedStates = remember(checkedStations) {
+                    checkedStations.associate { it.id to true }.toMutableMap()
+                }
                 val stationList by stationViewModel.stationList.collectAsState()
                 val isLoading by stationViewModel.isLoading.collectAsState()
                 var searchQuery by remember { mutableStateOf("") }
                 val focusManager = LocalFocusManager.current
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -152,6 +162,7 @@ class LikeStationActivity : ComponentActivity() {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                         } else {
                             StationListScreen(
+                                checkedStates = checkedStates,
                                 stations = stationList,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -164,6 +175,7 @@ class LikeStationActivity : ComponentActivity() {
 
     @Composable
     fun StationListScreen(
+        checkedStates: MutableMap<String, Boolean>,
         stations: List<SubwayStation>,
         modifier: Modifier = Modifier
     ) {
