@@ -34,9 +34,11 @@ class CheckStationViewModel @Inject constructor(
         }
     }
 
-    fun deleteCheckedStationList(id: String) {
+    fun clearCheckedStationList(list: List<CheckStation>) {
         viewModelScope.launch {
-            deleteStationUseCase(id)
+            list.forEach {
+                deleteStationUseCase(it.id)
+            }
         }
     }
 }

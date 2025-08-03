@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
                             stationName?.let {
-                                subwayArrivalViewModel.getSubwayArrival("홍대입구")
+                                subwayArrivalViewModel.getSubwayArrival(it)
                             }
                         }
                     }

@@ -70,7 +70,9 @@ class LikeStationActivity : ComponentActivity() {
 
                 val checkedStations by checkStationViewModel.checkStationList.collectAsState()
                 val checkedStates = remember(checkedStations) {
-                    checkedStations.associate { it.id to true }.toMutableMap()
+                    mutableStateMapOf<String, Boolean>().apply {
+                        checkedStations.forEach { put(it.id, true) }
+                    }
                 }
                 val stationList by stationViewModel.stationList.collectAsState()
                 val isLoading by stationViewModel.isLoading.collectAsState()
@@ -106,7 +108,19 @@ class LikeStationActivity : ComponentActivity() {
                                             line = it.line
                                         )
                                     }
+                                    val uncheckedStationList = stationList.filter {
+                                        checkedStates[it.bldn_id] != true
+                                    }.map {
+                                        CheckStation(
+                                            id = it.bldn_id,
+                                            name = it.name,
+                                            line = it.line
+                                        )
+                                    }
+
                                     checkStationViewModel.saveCheckedStationList(checkedStationList)
+                                    checkStationViewModel.clearCheckedStationList(uncheckedStationList)
+
                                     Toast.makeText(
                                         this@LikeStationActivity,
                                         "저장되었습니다",
