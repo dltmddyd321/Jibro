@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
                             stationName?.let {
-                                subwayArrivalViewModel.getSubwayArrival(it)
+                                subwayArrivalViewModel.getSubwayArrival("홍대입구")
                             }
                         }
                     }
@@ -294,7 +294,7 @@ class MainActivity : ComponentActivity() {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = arvlMsg2,
+                            text = formatArrivalMessage(arvlMsg2),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -323,5 +323,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun formatArrivalMessage(raw: String): String {
+        var result = raw
+
+        // 1. "[숫자]" 형식 괄호 제거
+        val bracketPattern = Regex("""\[(\d+)]""")
+        result = result.replace(bracketPattern) { it.groupValues[1] }
+
+        // 2. " 후"로 끝나면 "도착 예정" 붙이기
+        if (result.trim().endsWith("후")) {
+            result += " 도착 예정"
+        }
+
+        return result
     }
 }
