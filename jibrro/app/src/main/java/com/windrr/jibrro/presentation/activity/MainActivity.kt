@@ -3,7 +3,9 @@ package com.windrr.jibrro.presentation.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -44,11 +46,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,6 +69,7 @@ import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SubwayArrivalDataViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -180,6 +187,27 @@ class MainActivity : ComponentActivity() {
     ) {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+
+        var backPressedOnce by remember { mutableStateOf(false) }
+
+        BackHandler {
+            if (drawerState.isOpen) {
+                scope.launch { drawerState.close() }
+            } else {
+                if (backPressedOnce) {
+                    finish()
+                } else {
+                    backPressedOnce = true
+                    Toast.makeText(context, "한 번 더 누르면 종료됩니다", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        delay(2000)
+                        backPressedOnce = false
+                    }
+                }
+            }
+        }
+
         DismissibleNavigationDrawer(
             drawerState = drawerState, drawerContent = {
                 ModalDrawerSheet(
