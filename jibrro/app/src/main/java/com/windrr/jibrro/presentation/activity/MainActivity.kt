@@ -137,7 +137,9 @@ class MainActivity : ComponentActivity() {
 
                             when (arrivalState) {
                                 is Result.Success -> {
-                                    val arrivalList = arrivalState.data ?: emptyList()
+                                    val arrivalList = (arrivalState.data ?: emptyList()).sortedBy {
+                                        SubwayLineMap.getNameById(it.subwayId)
+                                    }
                                     if (arrivalList.isEmpty()) {
                                         Text(
                                             text = "도착 예정 정보 없음",
