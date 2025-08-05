@@ -30,7 +30,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
-fun PermissionRequiredDialog(onClick: () -> Unit) {
+fun LocationPermissionDialog(onClick: () -> Unit) {
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(

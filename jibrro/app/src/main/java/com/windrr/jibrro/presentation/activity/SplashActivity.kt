@@ -8,33 +8,26 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.component.AlarmPermissionModal
-import com.windrr.jibrro.presentation.component.PermissionRequiredDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
+
+    private lateinit var locationPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onResume() {
         super.onResume()
@@ -62,7 +55,6 @@ class SplashActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationHelper: LocationHelper
-    private val showPermissionDialog = mutableStateOf(false)
     private val showAlarmPermissionModal = mutableStateOf(false)
     private var lat = 0.0
     private var lng = 0.0
@@ -70,28 +62,19 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        locationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                requestLastLocation()
+            } else {
+                Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         setContent {
             JibrroTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                if (showPermissionDialog.value) {
-                    val context = LocalContext.current
-                    val settingsLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.StartActivityForResult()
-                    ) {
-                        checkLocationPermissionAndFetch()
-                    }
-                    PermissionRequiredDialog(
-                        onClick = {
-                            val intent =
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = "package:${context.packageName}".toUri()
-                                }
-                            settingsLauncher.launch(intent)
-                        }
-                    )
-                }
                 if (showAlarmPermissionModal.value) {
                     AlarmPermissionModal(
                         onGranted = {
@@ -116,11 +99,11 @@ class SplashActivity : ComponentActivity() {
 
             shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
-                showPermissionDialog.value = true
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
 
             else -> {
-                showPermissionDialog.value = true
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }
@@ -130,7 +113,7 @@ class SplashActivity : ComponentActivity() {
             onSuccess = { lat, lng ->
                 Log.d("SplashActivity", "위치: lat=$lat, lng=$lng")
                 if (lat == 0.0 && lng == 0.0) {
-                    showPermissionDialog.value = true
+                    Toast.makeText(this, "위치 정보를 가져오는 데 실패했습니다", Toast.LENGTH_SHORT).show()
                 } else {
                     if (!isAlarmPermissionGranted()) {
                         showAlarmPermissionModal.value = true
@@ -142,7 +125,7 @@ class SplashActivity : ComponentActivity() {
                 }
             },
             onFailure = {
-                showPermissionDialog.value = true
+                Toast.makeText(this, "위치 정보를 가져오는 데 실패했습니다", Toast.LENGTH_SHORT).show()
             }
         )
     }

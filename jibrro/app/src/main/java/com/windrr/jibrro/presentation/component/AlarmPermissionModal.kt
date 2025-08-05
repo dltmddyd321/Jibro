@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,13 +32,12 @@ fun AlarmPermissionModal(onGranted: () -> Unit) {
     var checkCompleted by remember { mutableStateOf(false) }
     var hasNotificationPermission by remember { mutableStateOf(false) }
     var hasExactAlarmPermission by remember { mutableStateOf(false) }
+    var isNeedToPermissionCheck by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            if (granted) {
-                onGranted()
-            }
+        onResult = { _ ->
+            isNeedToPermissionCheck = !isNeedToPermissionCheck
         }
     )
 
