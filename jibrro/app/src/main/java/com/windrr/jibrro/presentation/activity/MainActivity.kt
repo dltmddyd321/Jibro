@@ -1,8 +1,12 @@
 package com.windrr.jibrro.presentation.activity
 
+import SubwayLineMap
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -43,9 +47,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,26 +63,45 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
+import com.windrr.jibrro.presentation.component.LocationPermissionDialog
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SubwayArrivalDataViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var locationHelper: LocationHelper
     private val stationViewModel: StationViewModel by viewModels()
     private val subwayArrivalViewModel: SubwayArrivalDataViewModel by viewModels()
     private var lat = 0.0
     private var lng = 0.0
+
+    private fun isGetLocationPermission(): Boolean {
+        return when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> true
+
+            shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> false
+
+            else -> false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,12 +118,38 @@ class MainActivity : ComponentActivity() {
                 val stationName by stationViewModel.closestStation.collectAsState()
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
                 val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
+                var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
+
+                var currentLat by remember { mutableDoubleStateOf(lat) }
+                var currentLng by remember { mutableDoubleStateOf(lng) }
 
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
-                            stationName?.let {
-                                subwayArrivalViewModel.getSubwayArrival(it)
+                            hasLocationPermission = isGetLocationPermission()
+                            if (hasLocationPermission) {
+                                if (currentLat == 0.0 && currentLng == 0.0) {
+                                    locationHelper.getLastLocation(
+                                        onSuccess = { latResult, lngResult ->
+                                            currentLat = latResult
+                                            currentLng = lngResult
+                                            stationViewModel.findClosestStation(
+                                                latResult,
+                                                lngResult
+                                            )
+                                            stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
+                                        },
+                                        onFailure = {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "위치 정보를 가져오는 데 실패했습니다",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    )
+                                } else {
+                                    stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
+                                }
                             }
                         }
                     }
@@ -108,6 +157,18 @@ class MainActivity : ComponentActivity() {
                     onDispose {
                         lifecycleOwner.lifecycle.removeObserver(observer)
                     }
+                }
+
+                if (!hasLocationPermission) {
+                    LocationPermissionDialog(
+                        onClick = {
+                            val intent =
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", packageName, null)
+                                }
+                            startActivity(intent)
+                        }
+                    )
                 }
 
                 MainDrawerScreen(stationName) {

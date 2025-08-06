@@ -69,7 +69,11 @@ class SplashActivity : ComponentActivity() {
             if (granted) {
                 requestLastLocation()
             } else {
-                Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+                if (!isAlarmPermissionGranted()) {
+                    showAlarmPermissionModal.value = true
+                } else {
+                    start(lat, lng)
+                }
             }
         }
 
