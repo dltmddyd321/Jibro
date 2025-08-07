@@ -73,10 +73,12 @@ import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
 import com.windrr.jibrro.presentation.component.LocationPermissionDialog
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
+import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SubwayArrivalDataViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -87,6 +89,7 @@ class MainActivity : ComponentActivity() {
     lateinit var locationHelper: LocationHelper
     private val stationViewModel: StationViewModel by viewModels()
     private val subwayArrivalViewModel: SubwayArrivalDataViewModel by viewModels()
+    private val checkStationViewModel: CheckStationViewModel by viewModels()
     private var lat = 0.0
     private var lng = 0.0
 
@@ -119,6 +122,9 @@ class MainActivity : ComponentActivity() {
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
                 val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
                 var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
+                val saveStationNameList by checkStationViewModel.checkStationList
+                    .map { list -> list.map { it.name } }
+                    .collectAsState(initial = emptyList())
 
                 var currentLat by remember { mutableDoubleStateOf(lat) }
                 var currentLng by remember { mutableDoubleStateOf(lng) }
@@ -126,6 +132,7 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
+                            checkStationViewModel.fetchCheckedStationList()
                             hasLocationPermission = isGetLocationPermission()
                             if (hasLocationPermission) {
                                 if (currentLat == 0.0 && currentLng == 0.0) {

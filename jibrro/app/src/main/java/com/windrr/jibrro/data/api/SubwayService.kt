@@ -10,7 +10,7 @@ interface SubwayApiService {
     suspend fun getSubwayArrivalData(
         @Path("KEY") KEY: String,
         @Path("START_INDEX") START_INDEX: Int = 0,
-        @Path("END_INDEX") END_INDEX: Int = 5,
+        @Path("END_INDEX") END_INDEX: Int = 20,
         @Path("statnNm") statnNm: String
     ): Response<SubwayArrivalResponse>
 }
