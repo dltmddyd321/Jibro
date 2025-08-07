@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -68,6 +69,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.windrr.jibrro.R
+import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
@@ -126,6 +128,8 @@ class MainActivity : ComponentActivity() {
                     .map { list -> list.map { it.name } }
                     .collectAsState(initial = emptyList())
 
+                val filteredFavorites = saveStationNameList.filter { it != stationName }
+
                 var currentLat by remember { mutableDoubleStateOf(lat) }
                 var currentLng by remember { mutableDoubleStateOf(lng) }
 
@@ -156,6 +160,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 } else {
                                     stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
+                                }
+                                filteredFavorites.forEach { favStation ->
+                                    subwayArrivalViewModel.getSubwayArrival(favStation)
                                 }
                             }
                         }

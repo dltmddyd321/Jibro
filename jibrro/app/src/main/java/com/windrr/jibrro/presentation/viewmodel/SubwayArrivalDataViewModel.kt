@@ -19,6 +19,9 @@ class SubwayArrivalDataViewModel @Inject constructor(
     private val _arrivalState = MutableStateFlow<Result<List<RealtimeArrival>>>(Result.Loading())
     val arrivalState: StateFlow<Result<List<RealtimeArrival>>> = _arrivalState.asStateFlow()
 
+    private val _arrivalMap = MutableStateFlow<Map<String, Result<List<RealtimeArrival>>>>(emptyMap())
+    val arrivalMap: StateFlow<Map<String, Result<List<RealtimeArrival>>>> = _arrivalMap
+
     fun getSubwayArrival(statnNm: String) {
         viewModelScope.launch {
             _arrivalState.value = Result.Loading()
