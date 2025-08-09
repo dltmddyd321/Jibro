@@ -98,8 +98,7 @@ class MainActivity : ComponentActivity() {
     private fun isGetLocationPermission(): Boolean {
         return when {
             ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                this, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> true
 
             shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> false
@@ -124,14 +123,22 @@ class MainActivity : ComponentActivity() {
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
                 val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
                 var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
-                val saveStationNameList by checkStationViewModel.checkStationList
-                    .map { list -> list.map { it.name } }
+
+                var currentLat by remember { mutableDoubleStateOf(lat) }
+                var currentLng by remember { mutableDoubleStateOf(lng) }
+
+                val arrivalMap by subwayArrivalViewModel.arrivalMap.collectAsState()
+                val saveStationNameList by checkStationViewModel.checkStationList.map { list -> list.map { it.name } }
                     .collectAsState(initial = emptyList())
 
                 val filteredFavorites = saveStationNameList.filter { it != stationName }
 
-                var currentLat by remember { mutableDoubleStateOf(lat) }
-                var currentLng by remember { mutableDoubleStateOf(lng) }
+                val sections = remember(stationName, filteredFavorites) {
+                    buildList {
+                        stationName?.let { add(it) }
+                        addAll(filteredFavorites)
+                    }
+                }
 
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
@@ -140,26 +147,29 @@ class MainActivity : ComponentActivity() {
                             hasLocationPermission = isGetLocationPermission()
                             if (hasLocationPermission) {
                                 if (currentLat == 0.0 && currentLng == 0.0) {
-                                    locationHelper.getLastLocation(
-                                        onSuccess = { latResult, lngResult ->
-                                            currentLat = latResult
-                                            currentLng = lngResult
-                                            stationViewModel.findClosestStation(
-                                                latResult,
-                                                lngResult
-                                            )
-                                            stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
-                                        },
-                                        onFailure = {
-                                            Toast.makeText(
-                                                this@MainActivity,
-                                                "위치 정보를 가져오는 데 실패했습니다",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                    locationHelper.getLastLocation(onSuccess = { latResult, lngResult ->
+                                        currentLat = latResult
+                                        currentLng = lngResult
+                                        stationViewModel.findClosestStation(
+                                            latResult, lngResult
+                                        )
+                                        stationName?.let { name ->
+                                            val all =
+                                                buildList { add(name); addAll(filteredFavorites) }
+                                            subwayArrivalViewModel.refreshStations(all)
                                         }
-                                    )
+                                    }, onFailure = {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "위치 정보를 가져오는 데 실패했습니다",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    })
                                 } else {
-                                    stationName?.let { subwayArrivalViewModel.getSubwayArrival(it) }
+                                    stationName?.let { name ->
+                                        val all = buildList { add(name); addAll(filteredFavorites) }
+                                        subwayArrivalViewModel.refreshStations(all)
+                                    }
                                 }
                                 filteredFavorites.forEach { favStation ->
                                     subwayArrivalViewModel.getSubwayArrival(favStation)
@@ -181,11 +191,10 @@ class MainActivity : ComponentActivity() {
                                     data = Uri.fromParts("package", packageName, null)
                                 }
                             startActivity(intent)
-                        }
-                    )
+                        })
                 }
 
-                MainDrawerScreen(stationName) {
+                MainDrawerScreen(filteredFavorites, stationName) {
                     if (isSubwayLoading) {
                         Column(
                             modifier = Modifier
@@ -210,45 +219,73 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleLarge
                             )
 
-                            when (arrivalState) {
-                                is Result.Success -> {
-                                    val arrivalList = (arrivalState.data ?: emptyList()).sortedBy {
-                                        SubwayLineMap.getNameById(it.subwayId)
-                                    }
-                                    if (arrivalList.isEmpty()) {
+                            LazyColumn {
+                                sections.forEach { sectionName ->
+                                    item(key = "header-$sectionName") {
                                         Text(
-                                            text = "도착 예정 정보 없음",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.Red
+                                            text = sectionName,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp)
                                         )
-                                    } else {
-                                        LazyColumn {
-                                            items(arrivalList) { arrival ->
-                                                SubwayArrivalItem(
-                                                    updnLine = arrival.updnLine,
-                                                    arvlMsg2 = arrival.arvlMsg2,
-                                                    trainLineNm = arrival.trainLineNm,
-                                                    lstcarAt = arrival.lstcarAt,
-                                                    subwayId = arrival.subwayId
+                                    }
+
+                                    when (val state = arrivalMap[sectionName]) {
+                                        null, is Result.Loading -> {
+                                            item(key = "loading-$sectionName") {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.padding(
+                                                        8.dp
+                                                    )
                                                 )
-                                                Divider()
+                                            }
+                                        }
+
+                                        is Result.Error -> {
+                                            item(key = "error-$sectionName") {
+                                                Text(
+                                                    text = state.message ?: "도착 정보 불러오기 실패",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.Red,
+                                                    modifier = Modifier.padding(8.dp)
+                                                )
+                                            }
+                                        }
+
+                                        is Result.Success -> {
+                                            val arrivalList = (state.data ?: emptyList())
+                                                .sortedBy { SubwayLineMap.getNameById(it.subwayId) }
+
+                                            if (arrivalList.isEmpty()) {
+                                                item(key = "empty-$sectionName") {
+                                                    Text(
+                                                        text = "도착 예정 정보 없음",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Color.Red,
+                                                        modifier = Modifier.padding(8.dp)
+                                                    )
+                                                }
+                                            } else {
+                                                items(
+                                                    items = arrivalList,
+                                                    key = { "${sectionName}-${it.subwayId}-${it.trainLineNm}-${it.updnLine}" }
+                                                ) { arrival ->
+                                                    SubwayArrivalItem(
+                                                        updnLine = arrival.updnLine,
+                                                        arvlMsg2 = arrival.arvlMsg2,
+                                                        trainLineNm = arrival.trainLineNm,
+                                                        lstcarAt = arrival.lstcarAt,
+                                                        subwayId = arrival.subwayId
+                                                    )
+                                                    Divider()
+                                                }
                                             }
                                         }
                                     }
                                 }
-
-                                is Result.Error -> {
-                                    Text(
-                                        text = arrivalState.message ?: "도착 정보 불러오기 실패",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Red
-                                    )
-                                }
-
-                                is Result.Loading -> {
-                                    CircularProgressIndicator()
-                                }
                             }
+
                         }
                     }
                 }
@@ -259,8 +296,8 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainDrawerScreen(
-        stationName: String?,
-        content: @Composable () -> Unit
+        filteredFavorites: List<String>,
+        stationName: String?, content: @Composable () -> Unit
     ) {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -297,8 +334,7 @@ class MainActivity : ComponentActivity() {
                                 scope.launch { drawerState.close() }
                                 startActivity(
                                     Intent(
-                                        this@MainActivity,
-                                        LikeStationActivity::class.java
+                                        this@MainActivity, LikeStationActivity::class.java
                                     )
                                 )
                             }
@@ -310,8 +346,7 @@ class MainActivity : ComponentActivity() {
                                 scope.launch { drawerState.close() }
                                 startActivity(
                                     Intent(
-                                        this@MainActivity,
-                                        SettingsActivity::class.java
+                                        this@MainActivity, SettingsActivity::class.java
                                     )
                                 )
                             }
@@ -320,34 +355,30 @@ class MainActivity : ComponentActivity() {
             }) {
             Scaffold(
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Image(
-                                painter = painterResource(id = R.drawable.jibro_text),
-                                contentDescription = "Jibro",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = {
-                                scope.launch { drawerState.open() }
-                            }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "메뉴 열기")
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = {
-                                stationName?.let {
-                                    subwayArrivalViewModel.getSubwayArrival(it)
-                                }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "새로고침"
-                                )
-                            }
+                    TopAppBar(title = {
+                        Image(
+                            painter = painterResource(id = R.drawable.jibro_text),
+                            contentDescription = "Jibro",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }, navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch { drawerState.open() }
+                        }) {
+                            Icon(Icons.Filled.Menu, contentDescription = "메뉴 열기")
                         }
-                    )
+                    }, actions = {
+                        IconButton(onClick = {
+                            stationName?.let { name ->
+                                val all = buildList { add(name); addAll(filteredFavorites) }
+                                subwayArrivalViewModel.refreshStations(all)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh, contentDescription = "새로고침"
+                            )
+                        }
+                    })
                 }) { innerPadding ->
                 Box(
                     modifier = Modifier
@@ -404,9 +435,7 @@ class MainActivity : ComponentActivity() {
                             fontSize = 16.sp
                         )
                         Text(
-                            text = trainLineNm,
-                            fontSize = 14.sp,
-                            color = Color.Gray
+                            text = trainLineNm, fontSize = 14.sp, color = Color.Gray
                         )
                     }
                 }
