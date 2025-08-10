@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -48,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -121,7 +124,6 @@ class MainActivity : ComponentActivity() {
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val stationName by stationViewModel.closestStation.collectAsState()
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
-                val arrivalState by subwayArrivalViewModel.arrivalState.collectAsState()
                 var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
 
                 var currentLat by remember { mutableDoubleStateOf(lat) }
@@ -130,16 +132,20 @@ class MainActivity : ComponentActivity() {
                 val arrivalMap by subwayArrivalViewModel.arrivalMap.collectAsState()
                 val saveStationNameList by checkStationViewModel.checkStationList.map { list -> list.map { it.name } }
                     .collectAsState(initial = emptyList())
-
-                val filteredFavorites = saveStationNameList.filter { it != stationName }
-
+                val distinctFavorites = remember(saveStationNameList) {
+                    saveStationNameList.distinct()
+                }
+                val filteredFavorites = remember(distinctFavorites, stationName) {
+                    distinctFavorites.filter { it != stationName }
+                }
                 val sections = remember(stationName, filteredFavorites) {
                     buildList {
                         stationName?.let { add(it) }
                         addAll(filteredFavorites)
-                    }
+                    }.distinct()
                 }
 
+                Log.d("섹션 검사", "$sections")
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
@@ -171,15 +177,18 @@ class MainActivity : ComponentActivity() {
                                         subwayArrivalViewModel.refreshStations(all)
                                     }
                                 }
-                                filteredFavorites.forEach { favStation ->
-                                    subwayArrivalViewModel.getSubwayArrival(favStation)
-                                }
                             }
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose {
                         lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
+                }
+
+                LaunchedEffect(sections, hasLocationPermission) {
+                    if (hasLocationPermission && sections.isNotEmpty()) {
+                        subwayArrivalViewModel.refreshStations(sections)
                     }
                 }
 
@@ -213,15 +222,10 @@ class MainActivity : ComponentActivity() {
                         ) {
                             BannerAdView()
                             Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = stationName ?: "지하철역을 찾을 수 없습니다.",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-
                             LazyColumn {
-                                sections.forEach { sectionName ->
-                                    item(key = "header-$sectionName") {
+                                sections.forEachIndexed { index, sectionName ->
+                                    item {
+                                        if (index != 0) Spacer(modifier = Modifier.height(32.dp))
                                         Text(
                                             text = sectionName,
                                             style = MaterialTheme.typography.titleLarge,
@@ -233,7 +237,7 @@ class MainActivity : ComponentActivity() {
 
                                     when (val state = arrivalMap[sectionName]) {
                                         null, is Result.Loading -> {
-                                            item(key = "loading-$sectionName") {
+                                            item {
                                                 CircularProgressIndicator(
                                                     modifier = Modifier.padding(
                                                         8.dp
@@ -243,7 +247,7 @@ class MainActivity : ComponentActivity() {
                                         }
 
                                         is Result.Error -> {
-                                            item(key = "error-$sectionName") {
+                                            item {
                                                 Text(
                                                     text = state.message ?: "도착 정보 불러오기 실패",
                                                     style = MaterialTheme.typography.bodyMedium,
@@ -258,7 +262,7 @@ class MainActivity : ComponentActivity() {
                                                 .sortedBy { SubwayLineMap.getNameById(it.subwayId) }
 
                                             if (arrivalList.isEmpty()) {
-                                                item(key = "empty-$sectionName") {
+                                                item {
                                                     Text(
                                                         text = "도착 예정 정보 없음",
                                                         style = MaterialTheme.typography.bodyMedium,
@@ -267,10 +271,7 @@ class MainActivity : ComponentActivity() {
                                                     )
                                                 }
                                             } else {
-                                                items(
-                                                    items = arrivalList,
-                                                    key = { "${sectionName}-${it.subwayId}-${it.trainLineNm}-${it.updnLine}" }
-                                                ) { arrival ->
+                                                itemsIndexed(arrivalList) { _, arrival ->
                                                     SubwayArrivalItem(
                                                         updnLine = arrival.updnLine,
                                                         arvlMsg2 = arrival.arvlMsg2,
