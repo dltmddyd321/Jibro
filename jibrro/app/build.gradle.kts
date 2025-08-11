@@ -52,6 +52,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.material3)
+    implementation(libs.androidx.glance.appwidget)
     implementation("com.google.android.gms:play-services-ads:24.5.0")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("androidx.hilt:hilt-work:1.2.0")

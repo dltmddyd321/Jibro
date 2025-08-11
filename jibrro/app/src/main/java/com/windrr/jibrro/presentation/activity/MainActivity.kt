@@ -459,19 +459,19 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    private fun formatArrivalMessage(raw: String): String {
-        var result = raw
+fun formatArrivalMessage(raw: String): String {
+    var result = raw
 
-        // 1. "[숫자]" 형식 괄호 제거
-        val bracketPattern = Regex("""\[(\d+)]""")
-        result = result.replace(bracketPattern) { it.groupValues[1] }
+    // 1. "[숫자]" 형식 괄호 제거
+    val bracketPattern = Regex("""\[(\d+)]""")
+    result = result.replace(bracketPattern) { it.groupValues[1] }
 
-        // 2. " 후"로 끝나면 "도착 예정" 붙이기
-        if (result.trim().endsWith("후")) {
-            result += " 도착 예정"
-        }
-
-        return result
+    // 2. " 후"로 끝나면 "도착 예정" 붙이기
+    if (result.trim().endsWith("후")) {
+        result += " 도착 예정"
     }
+
+    return result
 }
