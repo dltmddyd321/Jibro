@@ -24,15 +24,50 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.presentation.activity.formatArrivalMessage
+import com.windrr.jibrro.infrastructure.LocationHelper
+import com.windrr.jibrro.domain.usecase.GetStationListUseCase
+import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
+import com.windrr.jibrro.data.model.SubwayStation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.math.*
 
 class ArrivalInfoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        provideContent { ArrivalInfoWidgetScreen() }
+        val locationHelper = LocationHelper(context)
+        val latLng = withContext(Dispatchers.IO) {
+            locationHelper.getLastLocationSuspend()
+        }
+        val assetDataSource = StationAssetDataSource(context)
+        val stationRepo = SubwayStationRepositoryImpl(assetDataSource)
+        val getStationListUseCase = GetStationListUseCase(stationRepo)
+        val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
+        val closestStation = latLng?.let { (lat, lng) ->
+            stations.minByOrNull { station ->
+                distanceInMeters(lat, lng, station.lat, station.lng)
+            }
+        }
+        provideContent {
+            ArrivalInfoWidgetScreen(latLng, closestStation)
+        }
     }
 
     @Composable
-    fun ArrivalInfoWidgetScreen() {
-
+    fun ArrivalInfoWidgetScreen(latLng: Pair<Double, Double>?, closestStation: SubwayStation?) {
+        Column {
+            if (latLng == null) {
+                Text("위치 정보를 가져올 수 없습니다")
+            } else {
+                Text("위도: ${latLng.first}, 경도: ${latLng.second}")
+            }
+            Spacer(GlanceModifier.height(8.dp))
+            if (closestStation != null) {
+                Text("가장 가까운 역: ${closestStation.name}")
+            } else {
+                Text("가까운 역 정보를 찾을 수 없습니다")
+            }
+        }
     }
 
     @Composable
@@ -101,5 +136,19 @@ class ArrivalInfoWidget : GlanceAppWidget() {
                 )
             )
         }
+    }
+
+    private fun distanceInMeters(
+        lat1: Double, lon1: Double,
+        lat2: Double, lon2: Double
+    ): Double {
+        val R = 6371000.0 // Earth radius in meters
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2).pow(2.0) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2).pow(2.0)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
     }
 }
