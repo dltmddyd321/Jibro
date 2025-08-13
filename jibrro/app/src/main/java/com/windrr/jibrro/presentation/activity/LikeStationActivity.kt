@@ -119,7 +119,9 @@ class LikeStationActivity : ComponentActivity() {
                                     }
 
                                     checkStationViewModel.saveCheckedStationList(checkedStationList)
-                                    checkStationViewModel.clearCheckedStationList(uncheckedStationList)
+                                    checkStationViewModel.clearCheckedStationList(
+                                        uncheckedStationList
+                                    )
 
                                     Toast.makeText(
                                         this@LikeStationActivity,
@@ -193,14 +195,30 @@ class LikeStationActivity : ComponentActivity() {
         stations: List<SubwayStation>,
         modifier: Modifier = Modifier
     ) {
+        val combinedLinesByName = remember(stations) {
+            stations
+                .groupBy { it.name }
+                .mapValues { (_, list) ->
+                    list.map { it.line }
+                        .flatMap { it.split('/').map(String::trim) }
+                        .distinct()
+                        .joinToString(" / ")
+                }
+        }
+
+        val distinctStations = remember(stations) {
+            stations.distinctBy { it.name }
+        }
+
         LazyColumn(modifier = modifier.fillMaxSize()) {
-            items(stations) { station ->
+            items(distinctStations) { station ->
                 val stationId = station.bldn_id
                 val checked = checkedStates[stationId] ?: false
+                val displayLine = combinedLinesByName[station.name] ?: station.line
 
                 StationListItem(
                     name = station.name,
-                    line = station.line,
+                    line = displayLine,
                     checked = checked,
                     onCheckedChange = { isChecked ->
                         checkedStates[stationId] = isChecked
