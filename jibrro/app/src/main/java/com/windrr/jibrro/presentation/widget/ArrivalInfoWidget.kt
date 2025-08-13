@@ -1,5 +1,6 @@
 package com.windrr.jibrro.presentation.widget
 
+import SubwayLineMap
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -23,49 +24,90 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
-import com.windrr.jibrro.presentation.activity.formatArrivalMessage
-import com.windrr.jibrro.infrastructure.LocationHelper
-import com.windrr.jibrro.domain.usecase.GetStationListUseCase
-import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
-import com.windrr.jibrro.data.model.SubwayStation
+import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.usecase.GetStationListUseCase
+import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
+import com.windrr.jibrro.infrastructure.LocationHelper
+import com.windrr.jibrro.presentation.activity.formatArrivalMessage
+import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.*
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface WidgetEntryPoint {
+    fun getSubwayArrivalDataUseCase(): GetSubwayArrivalDataUseCase
+}
 
 class ArrivalInfoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val locationHelper = LocationHelper(context)
-        val latLng = withContext(Dispatchers.IO) {
-            locationHelper.getLastLocationSuspend()
-        }
+        val latLng = withContext(Dispatchers.IO) { locationHelper.getLastLocationSuspend() }
+
         val assetDataSource = StationAssetDataSource(context)
         val stationRepo = SubwayStationRepositoryImpl(assetDataSource)
         val getStationListUseCase = GetStationListUseCase(stationRepo)
         val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
         val closestStation = latLng?.let { (lat, lng) ->
-            stations.minByOrNull { station ->
-                distanceInMeters(lat, lng, station.lat, station.lng)
-            }
+            stations.minByOrNull { s -> distanceInMeters(lat, lng, s.lat, s.lng) }
         }
+
+        val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
+        val getArrivals = entryPoint.getSubwayArrivalDataUseCase()
+
+        val arrival = closestStation?.let { station ->
+            val result = withContext(Dispatchers.IO) {
+                getArrivals.execute(statnNm = station.name)
+            }
+            result
+        } ?: Result.Error("No closest station found")
         provideContent {
-            ArrivalInfoWidgetScreen(latLng, closestStation)
+            ArrivalInfoWidgetScreen(latLng, arrival)
         }
     }
 
     @Composable
-    fun ArrivalInfoWidgetScreen(latLng: Pair<Double, Double>?, closestStation: SubwayStation?) {
+    fun ArrivalInfoWidgetScreen(
+        latLng: Pair<Double, Double>?,
+        closestStation: Result<List<RealtimeArrival>>
+    ) {
         Column {
-            if (latLng == null) {
-                Text("위치 정보를 가져올 수 없습니다")
-            } else {
-                Text("위도: ${latLng.first}, 경도: ${latLng.second}")
-            }
+            if (latLng == null) Text("위치 정보를 가져올 수 없습니다")
+            else Text("위도: ${latLng.first}, 경도: ${latLng.second}")
+
             Spacer(GlanceModifier.height(8.dp))
-            if (closestStation != null) {
-                Text("가장 가까운 역: ${closestStation.name}")
-            } else {
-                Text("가까운 역 정보를 찾을 수 없습니다")
+
+            when (closestStation) {
+                is Result.Success -> {
+                    closestStation.data?.forEach { arrival ->
+                        SubwayArrivalItemGlance(
+                            subwayId = arrival.subwayId,
+                            updnLine = arrival.updnLine,
+                            arvlMsg2 = arrival.arvlMsg2,
+                            trainLineNm = arrival.trainLineNm,
+                            lstcarAt = arrival.lstcarAt
+                        )
+                    }
+                }
+
+                is Result.Loading -> {
+                    Text("불러오는 중...")
+                }
+
+                is Result.Error -> {
+                    Text("에러: ${closestStation.message}")
+                }
             }
         }
     }
