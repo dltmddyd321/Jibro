@@ -2,6 +2,7 @@ package com.windrr.jibrro.presentation.widget
 
 import SubwayLineMap
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -9,7 +10,9 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
@@ -17,6 +20,7 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
@@ -32,6 +36,7 @@ import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.formatArrivalMessage
+import com.windrr.jibrro.presentation.widget.action.RefreshAction
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
@@ -63,6 +68,8 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             stations.minByOrNull { s -> distanceInMeters(lat, lng, s.lat, s.lng) }
         }
 
+        Log.d("ArrivalInfoWidget", " $latLng Closest station: ${closestStation?.name}")
+
         val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
         val getArrivals = entryPoint.getSubwayArrivalDataUseCase()
 
@@ -82,9 +89,22 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         latLng: Pair<Double, Double>?,
         closestStation: Result<List<RealtimeArrival>>
     ) {
-        Column {
+        Column(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(ColorProvider(day = Color.White, night = Color.White))
+                .padding(8.dp)
+        ) {
             if (latLng == null) Text("위치 정보를 가져올 수 없습니다")
-            else Text("위도: ${latLng.first}, 경도: ${latLng.second}")
+
+            Text(
+                text = "새로고침",
+                style = TextStyle(fontSize = 12.sp),
+                modifier = GlanceModifier
+                    .background(androidx.glance.unit.ColorProvider(Color(0xFF000000)))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .clickable(onClick = actionRunCallback<RefreshAction>())
+            )
 
             Spacer(GlanceModifier.height(8.dp))
 

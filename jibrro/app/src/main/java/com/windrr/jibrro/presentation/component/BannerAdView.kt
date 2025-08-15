@@ -21,29 +21,25 @@ import com.google.android.gms.ads.LoadAdError
 fun BannerAdView(
     modifier: Modifier = Modifier
 ) {
-    var isAdVisible by remember { mutableStateOf(false) }
-    if (isAdVisible) {
-        AndroidView(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            factory = { context ->
-                AdView(context).apply {
-                    setAdSize(AdSize.BANNER)
-                    adUnitId = "ca-app-pub-2156013754929909/4254063400"
-                    adListener = object : AdListener() {
-                        override fun onAdLoaded() {
-                            isAdVisible = true
-                        }
-
-                        override fun onAdFailedToLoad(error: LoadAdError) {
-                            isAdVisible = false
-                            Log.e("AdView", "Ad failed: ${error.message}")
-                        }
+    AndroidView(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp),
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = "ca-app-pub-2156013754929909/4254063400"
+                adListener = object : AdListener() {
+                    override fun onAdLoaded() {
+                        Log.i("AdView", "Ad loaded")
                     }
-                    loadAd(AdRequest.Builder().build())
+
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.e("AdView", "Ad failed: ${error.message}")
+                    }
                 }
+                loadAd(AdRequest.Builder().build())
             }
-        )
-    }
+        }
+    )
 }

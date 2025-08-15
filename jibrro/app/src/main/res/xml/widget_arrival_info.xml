@@ -4,6 +4,6 @@
     android:minWidth="326dp"
     android:minHeight="115dp"
     android:previewImage="@drawable/ic_launcher_foreground"
-    android:resizeMode="none"
+    android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

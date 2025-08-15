@@ -247,7 +247,7 @@ class LikeStationActivity : ComponentActivity() {
             ) {
                 Text(
                     text = name,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
