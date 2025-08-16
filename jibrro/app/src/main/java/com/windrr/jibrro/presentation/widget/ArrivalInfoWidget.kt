@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionRunCallback
@@ -35,6 +36,7 @@ import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
+import com.windrr.jibrro.presentation.activity.SplashActivity
 import com.windrr.jibrro.presentation.activity.formatArrivalMessage
 import com.windrr.jibrro.presentation.widget.action.RefreshAction
 import dagger.hilt.EntryPoint
@@ -56,6 +58,9 @@ interface WidgetEntryPoint {
 }
 
 class ArrivalInfoWidget : GlanceAppWidget() {
+
+    private val appOpenAction = actionStartActivity<SplashActivity>()
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val locationHelper = LocationHelper(context)
         val latLng = withContext(Dispatchers.IO) { locationHelper.getLastLocationSuspend() }
@@ -92,6 +97,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
+                .clickable(onClick = appOpenAction)
                 .background(ColorProvider(day = Color.White, night = Color.White))
                 .padding(8.dp)
         ) {
@@ -99,9 +105,12 @@ class ArrivalInfoWidget : GlanceAppWidget() {
 
             Text(
                 text = "새로고침",
-                style = TextStyle(fontSize = 12.sp),
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    color = ColorProvider(day = Color.Blue, night = Color.Blue)
+                ),
                 modifier = GlanceModifier
-                    .background(androidx.glance.unit.ColorProvider(Color(0xFF000000)))
+                    .background(Color.Transparent)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .clickable(onClick = actionRunCallback<RefreshAction>())
             )
@@ -141,7 +150,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         lstcarAt: String,
         modifier: GlanceModifier = GlanceModifier
     ) {
-        val labelColor = ColorProvider(day = Color(0xFF424242), night = Color(0xFFEEEEEE))
+        val labelColor = androidx.glance.unit.ColorProvider(Color(0xFF212121))
         val upColor = ColorProvider(day = Color(0xFF1E88E5), night = Color(0xFF90CAF9))
         val downColor = ColorProvider(day = Color(0xFFD32F2F), night = Color(0xFFEF9A9A))
         val lineColor = if (updnLine == "상행") upColor else downColor
