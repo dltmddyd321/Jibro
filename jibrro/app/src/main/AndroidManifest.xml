@@ -23,7 +23,8 @@
         tools:targetApi="31">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-2156013754929909~4133308748"/>
+            android:value="ca-app-pub-2156013754929909~4133308748" />
+
         <activity
             android:name=".presentation.activity.SettingsActivity"
             android:exported="false"
@@ -64,12 +65,12 @@
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove">
-        </provider>
+            tools:node="remove" />
 
         <receiver
             android:name=".presentation.widget.ArrivalInfoWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="도착 정보">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

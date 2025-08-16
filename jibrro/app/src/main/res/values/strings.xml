@@ -30,4 +30,5 @@
     <string name="station_search_placeholder">지하철역 검색</string>
     <string name="search">검색</string>
     <string name="saved">저장되었습니다</string>
+    <string name="widget_desc">가장 가까운 지하철역 도착 정보 확인이 가능합니다</string>
 </resources>

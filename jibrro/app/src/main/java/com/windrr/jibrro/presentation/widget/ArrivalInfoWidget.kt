@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
@@ -25,6 +27,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -91,15 +94,11 @@ class ArrivalInfoWidget : GlanceAppWidget() {
 
     @Composable
     fun ArrivalInfoWidgetScreen(
-        latLng: Pair<Double, Double>?,
-        closestStation: Result<List<RealtimeArrival>>
+        latLng: Pair<Double, Double>?, closestStation: Result<List<RealtimeArrival>>
     ) {
         Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .clickable(onClick = appOpenAction)
-                .background(ColorProvider(day = Color.White, night = Color.White))
-                .padding(8.dp)
+            modifier = GlanceModifier.fillMaxSize().clickable(onClick = appOpenAction)
+                .background(ColorProvider(day = Color.White, night = Color.White)).padding(8.dp)
         ) {
             if (latLng == null) Text("위치 정보를 가져올 수 없습니다")
 
@@ -156,9 +155,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         val lineColor = if (updnLine == "상행") upColor else downColor
 
         Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(8.dp)
+            modifier = modifier.fillMaxWidth().padding(8.dp)
         ) {
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
@@ -167,9 +164,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
                 Text(
                     text = SubwayLineMap.getNameById(subwayId),
                     style = TextStyle(
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = labelColor
+                        fontSize = 14.sp, fontWeight = FontWeight.Medium, color = labelColor
                     ),
                 )
                 Spacer(modifier = GlanceModifier.defaultWeight())
@@ -177,15 +172,11 @@ class ArrivalInfoWidget : GlanceAppWidget() {
                     Text(
                         text = "막차",
                         style = TextStyle(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorProvider(
-                                day = Color(0xFFD32F2F),
-                                night = Color(0xFFFFCDD2)
+                            fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ColorProvider(
+                                day = Color(0xFFD32F2F), night = Color(0xFFFFCDD2)
                             )
                         ),
-                        modifier = GlanceModifier
-                            .background(ImageProvider(R.drawable.widget_badge_last_train))
+                        modifier = GlanceModifier.background(ImageProvider(R.drawable.widget_badge_last_train))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -199,26 +190,23 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             )
 
             Text(
-                text = trainLineNm,
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = lineColor
+                text = trainLineNm, style = TextStyle(
+                    fontSize = 14.sp, fontWeight = FontWeight.Normal, color = lineColor
                 )
             )
         }
     }
 
     private fun distanceInMeters(
-        lat1: Double, lon1: Double,
-        lat2: Double, lon2: Double
+        lat1: Double, lon1: Double, lat2: Double, lon2: Double
     ): Double {
         val R = 6371000.0 // Earth radius in meters
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2).pow(2.0) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2.0)
+        val a =
+            sin(dLat / 2).pow(2.0) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(
+                dLon / 2
+            ).pow(2.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
     }
