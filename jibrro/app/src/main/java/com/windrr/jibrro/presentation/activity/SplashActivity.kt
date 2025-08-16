@@ -27,55 +27,32 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
 
-    private lateinit var locationPermissionLauncher: ActivityResultLauncher<String>
-
-    override fun onResume() {
-        super.onResume()
-        if (isAlarmPermissionGranted()) {
-            showAlarmPermissionModal.value = false
-            start(lat, lng)
-        }
-    }
-
-    private fun isAlarmPermissionGranted(): Boolean {
-        val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else true
-
-        val hasExactAlarmPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            alarmManager.canScheduleExactAlarms()
-        } else true
-
-        return hasNotificationPermission && hasExactAlarmPermission
-    }
-
     @Inject
     lateinit var locationHelper: LocationHelper
+
+    private lateinit var locationPermissionLauncher: ActivityResultLauncher<String>
+
     private val showAlarmPermissionModal = mutableStateOf(false)
-    private var lat = 0.0
-    private var lng = 0.0
+    private var lat: Double? = null
+    private var lng: Double? = null
+    private var hasNavigated = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        locationPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { granted ->
-            if (granted) {
-                requestLastLocation()
-            } else {
-                if (!isAlarmPermissionGranted()) {
-                    showAlarmPermissionModal.value = true
+        locationPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                if (granted) {
+                    requestLastLocation()
                 } else {
-                    start(lat, lng)
+                    if (!isAlarmPermissionGranted()) {
+                        showAlarmPermissionModal.value = true
+                    } else {
+                        navigateIfReady()
+                    }
                 }
             }
-        }
 
         setContent {
             JibrroTheme {
@@ -83,20 +60,37 @@ class SplashActivity : ComponentActivity() {
                     AlarmPermissionModal(
                         onGranted = {
                             showAlarmPermissionModal.value = false
-                            start(lat, lng)
+                            navigateIfReady()
                         }
                     )
                 }
             }
         }
+
         checkLocationPermissionAndFetch()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isAlarmPermissionGranted()) {
+            showAlarmPermissionModal.value = false
+            navigateIfReady()
+        }
+    }
+
+    private fun navigateIfReady() {
+        if (hasNavigated) return
+        val ready = isAlarmPermissionGranted() && lat != null && lng != null
+        if (ready) {
+            hasNavigated = true
+            start(lat!!, lng!!)
+        }
     }
 
     private fun checkLocationPermissionAndFetch() {
         when {
             ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                this, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
                 requestLastLocation()
             }
@@ -119,13 +113,13 @@ class SplashActivity : ComponentActivity() {
                 if (lat == 0.0 && lng == 0.0) {
                     Toast.makeText(this, "위치 정보를 가져오는 데 실패했습니다", Toast.LENGTH_SHORT).show()
                 } else {
+                    this.lat = lat
+                    this.lng = lng
                     if (!isAlarmPermissionGranted()) {
                         showAlarmPermissionModal.value = true
                     } else {
-                        start(lat, lng)
+                        navigateIfReady()
                     }
-                    this.lat = lat
-                    this.lng = lng
                 }
             },
             onFailure = {
@@ -134,11 +128,29 @@ class SplashActivity : ComponentActivity() {
         )
     }
 
+    private fun isAlarmPermissionGranted(): Boolean {
+        val hasNotificationPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            } else true
+
+        val hasExactAlarmPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                alarmManager.canScheduleExactAlarms()
+            } else true
+
+        return hasNotificationPermission && hasExactAlarmPermission
+    }
+
     private fun start(lat: Double, lng: Double) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        intent.putExtra("lat", lat)
-        intent.putExtra("lng", lng)
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("lat", lat)
+            putExtra("lng", lng)
+        }
         startActivity(intent)
         finish()
     }

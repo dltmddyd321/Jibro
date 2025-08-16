@@ -155,7 +155,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             Spacer(GlanceModifier.defaultWeight())
             Text(
                 text = "새로고침",
-                style = TextStyle(fontSize = 11.sp, color = AccentBlue),
+                style = TextStyle(fontSize = 16.sp, color = AccentBlue),
                 modifier = GlanceModifier.clickable(onClick = actionRunCallback<RefreshAction>())
             )
         }
