@@ -7,15 +7,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
@@ -27,12 +27,13 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.RealtimeArrival
+import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
 import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
 import com.windrr.jibrro.data.util.Result
@@ -63,6 +64,12 @@ interface WidgetEntryPoint {
 class ArrivalInfoWidget : GlanceAppWidget() {
 
     private val appOpenAction = actionStartActivity<SplashActivity>()
+    private val Bg = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF121212))
+    private val Surface = ColorProvider(day = Color(0xFFF7F8FA), night = Color(0xFF1E1E1E))
+    private val OnBg = ColorProvider(day = Color(0xFF1B1B1B), night = Color(0xFFECECEC))
+    private val Subtle = ColorProvider(day = Color(0xFF6B7280), night = Color(0xFFB0B7C3))
+    private val AccentBlue = ColorProvider(day = Color(0xFF03A9F4), night = Color(0xFF81D4FA)) // 하늘색
+    private val Danger = ColorProvider(day = Color(0xFFD32F2F), night = Color(0xFFFFCDD2))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val locationHelper = LocationHelper(context)
@@ -87,112 +94,196 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             }
             result
         } ?: Result.Error("No closest station found")
+
+        val fetchedTime: Long? = if (arrival is Result.Success) System.currentTimeMillis() else null
+
         provideContent {
-            ArrivalInfoWidgetScreen(latLng, arrival)
+            ArrivalInfoWidgetScreen(closestStation, arrival, fetchedTime)
         }
     }
 
     @Composable
     fun ArrivalInfoWidgetScreen(
-        latLng: Pair<Double, Double>?, closestStation: Result<List<RealtimeArrival>>
+        closestStation: SubwayStation?,
+        arrivalData: Result<List<RealtimeArrival>>,
+        fetchedTime: Long?
     ) {
         Column(
-            modifier = GlanceModifier.fillMaxSize().clickable(onClick = appOpenAction)
-                .background(ColorProvider(day = Color.White, night = Color.White)).padding(8.dp)
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(Bg)
+                .padding(10.dp)
+                .clickable(onClick = appOpenAction)
         ) {
-            if (latLng == null) Text("위치 정보를 가져올 수 없습니다")
-
-            Text(
-                text = "새로고침",
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    color = ColorProvider(day = Color.Blue, night = Color.Blue)
-                ),
-                modifier = GlanceModifier
-                    .background(Color.Transparent)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .clickable(onClick = actionRunCallback<RefreshAction>())
+            HeaderSection(
+                closestStation = closestStation,
+                lastUpdatedText = when (arrivalData) {
+                    is Result.Success -> formatLastUpdated(fetchedTime)
+                    is Result.Loading -> "갱신 중…"
+                    is Result.Error   -> "오류 발생"
+                }
             )
 
             Spacer(GlanceModifier.height(8.dp))
 
-            when (closestStation) {
-                is Result.Success -> {
-                    closestStation.data?.forEach { arrival ->
-                        SubwayArrivalItemGlance(
-                            subwayId = arrival.subwayId,
-                            updnLine = arrival.updnLine,
-                            arvlMsg2 = arrival.arvlMsg2,
-                            trainLineNm = arrival.trainLineNm,
-                            lstcarAt = arrival.lstcarAt
-                        )
+            ContentSection(arrivalData)
+
+            Spacer(GlanceModifier.height(8.dp))
+            FooterHint()
+        }
+    }
+
+    @Composable
+    private fun HeaderSection(closestStation: SubwayStation?, lastUpdatedText: String) {
+        Row(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .background(Surface)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Vertical.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = closestStation?.name ?: "위치 정보를 가져올 수 없습니다",
+                    style = TextStyle(fontSize = 20.sp, color = OnBg)
+                )
+                Text(
+                    text = lastUpdatedText,
+                    style = TextStyle(fontSize = 11.sp, color = Subtle)
+                )
+            }
+            Spacer(GlanceModifier.defaultWeight())
+            Text(
+                text = "새로고침",
+                style = TextStyle(fontSize = 11.sp, color = AccentBlue),
+                modifier = GlanceModifier.clickable(onClick = actionRunCallback<RefreshAction>())
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentSection(result: Result<List<RealtimeArrival>>) {
+        when (result) {
+            is Result.Loading -> {
+                PlaceholderCard("도착 정보를 불러오는 중…")
+            }
+
+            is Result.Error -> {
+                PlaceholderCard("연결 오류: ${result.message ?: "알 수 없는 오류"}")
+            }
+
+            is Result.Success -> {
+                val list = result.data.orEmpty()
+                if (list.isEmpty()) {
+                    PlaceholderCard("표시할 도착 정보가 없습니다")
+                    return
+                }
+                LazyColumn(
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                ) {
+                    items(list) { arrival ->
+                        ArrivalCard(arrival)
+                        Spacer(GlanceModifier.height(6.dp))
                     }
-                }
-
-                is Result.Loading -> {
-                    Text("불러오는 중...")
-                }
-
-                is Result.Error -> {
-                    Text("에러: ${closestStation.message}")
                 }
             }
         }
     }
 
     @Composable
-    fun SubwayArrivalItemGlance(
-        subwayId: String,
-        updnLine: String,
-        arvlMsg2: String,
-        trainLineNm: String,
-        lstcarAt: String,
-        modifier: GlanceModifier = GlanceModifier
-    ) {
-        val labelColor = androidx.glance.unit.ColorProvider(Color(0xFF212121))
+    private fun ArrivalCard(a: RealtimeArrival) {
         val upColor = ColorProvider(day = Color(0xFF1E88E5), night = Color(0xFF90CAF9))
         val downColor = ColorProvider(day = Color(0xFFD32F2F), night = Color(0xFFEF9A9A))
-        val lineColor = if (updnLine == "상행") upColor else downColor
+        val lineColor = if (a.updnLine == "상행") upColor else downColor
 
         Column(
-            modifier = modifier.fillMaxWidth().padding(8.dp)
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .background(Surface)
+                .padding(10.dp)
         ) {
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Vertical.CenterVertically
             ) {
                 Text(
-                    text = SubwayLineMap.getNameById(subwayId),
+                    text = SubwayLineMap.getNameById(a.subwayId),
                     style = TextStyle(
-                        fontSize = 14.sp, fontWeight = FontWeight.Medium, color = labelColor
+                        fontSize = 12.sp,
+                        color = lineColor,
+                        fontWeight = FontWeight.Medium
                     ),
+                    modifier = GlanceModifier
+                        .background(ImageProvider(R.drawable.widget_chip_background))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
                 )
-                Spacer(modifier = GlanceModifier.defaultWeight())
-                if (lstcarAt == "1") {
+
+                Spacer(GlanceModifier.width(8.dp))
+
+                Text(
+                    text = a.updnLine,
+                    style = TextStyle(fontSize = 12.sp, color = Subtle)
+                )
+
+                Spacer(GlanceModifier.defaultWeight())
+
+                if (a.lstcarAt == "1") {
                     Text(
                         text = "막차",
                         style = TextStyle(
-                            fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ColorProvider(
-                                day = Color(0xFFD32F2F), night = Color(0xFFFFCDD2)
-                            )
+                            fontSize = 11.sp,
+                            color = Danger,
+                            fontWeight = FontWeight.Bold
                         ),
-                        modifier = GlanceModifier.background(ImageProvider(R.drawable.widget_badge_last_train))
+                        modifier = GlanceModifier
+                            .background(ImageProvider(R.drawable.widget_badge_last_train))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
-            Spacer(modifier = GlanceModifier.height(4.dp))
+            Spacer(GlanceModifier.height(6.dp))
 
             Text(
-                text = formatArrivalMessage(arvlMsg2),
-                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                text = formatArrivalMessage(a.arvlMsg2),
+                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = OnBg)
             )
 
-            Text(
-                text = trainLineNm, style = TextStyle(
-                    fontSize = 14.sp, fontWeight = FontWeight.Normal, color = lineColor
+            if (a.trainLineNm.isNotBlank()) {
+                Spacer(GlanceModifier.height(2.dp))
+                Text(
+                    text = a.trainLineNm,
+                    style = TextStyle(fontSize = 12.sp, color = Subtle)
                 )
+            }
+        }
+    }
+
+    @Composable
+    private fun PlaceholderCard(text: String) {
+        Row(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .background(Surface)
+                .padding(12.dp),
+            verticalAlignment = Alignment.Vertical.CenterVertically
+        ) {
+            Text(text = text, style = TextStyle(fontSize = 13.sp, color = Subtle))
+        }
+    }
+
+    @Composable
+    private fun FooterHint() {
+        Row(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp),
+            verticalAlignment = Alignment.Vertical.CenterVertically
+        ) {
+            Text(
+                text = "탭하면 앱이 열립니다",
+                style = TextStyle(fontSize = 11.sp, color = Subtle)
             )
         }
     }
@@ -209,5 +300,12 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             ).pow(2.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+    }
+
+    private fun formatLastUpdated(millis: Long?): String {
+        if (millis == null) return "마지막 업데이트 없음"
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = millis }
+        val fmt = java.text.SimpleDateFormat("a h시 m분", java.util.Locale.KOREAN)
+        return "마지막 업데이트 • ${fmt.format(cal.time)}"
     }
 }
