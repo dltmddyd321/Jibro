@@ -12,8 +12,8 @@ import com.windrr.jibrro.R
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val channelId = "alarm_channel"
-        val title = "Jibro 알림"
-        val content = "설정한 시간에 알람이 울립니다!"
+        val title = "Jibro"
+        val content = "인근 지하철 막차 운행입니다."
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

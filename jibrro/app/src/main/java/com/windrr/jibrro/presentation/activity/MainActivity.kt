@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -25,11 +26,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,6 +43,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -66,13 +65,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.windrr.jibrro.R
-import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
@@ -272,7 +269,7 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             } else {
                                                 itemsIndexed(arrivalList) { _, arrival ->
-                                                    SubwayArrivalItem(
+                                                    SubwayArrivalItemCard(
                                                         updnLine = arrival.updnLine,
                                                         arvlMsg2 = arrival.arvlMsg2,
                                                         trainLineNm = arrival.trainLineNm,
@@ -394,7 +391,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun SubwayArrivalItem(
+    fun SubwayArrivalItemCard(
         subwayId: String,
         updnLine: String,
         arvlMsg2: String,
@@ -402,73 +399,135 @@ class MainActivity : ComponentActivity() {
         lstcarAt: String,
         modifier: Modifier = Modifier
     ) {
-        Box(
+        val surface = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        val onBg = MaterialTheme.colorScheme.onBackground
+        val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+        val upColor = Color(0xFF1E88E5)
+        val downColor = Color(0xFFD32F2F)
+        val lineColor = if (updnLine == "상행") upColor else downColor
+
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = surface,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
             modifier = modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(vertical = 6.dp)
         ) {
-            Column {
-                Text(
-                    text = SubwayLineMap.getNameById(subwayId),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val iconRes = if (updnLine == "상행") R.drawable.up_line else R.drawable.down_line
-                    Image(
-                        painter = painterResource(id = iconRes),
-                        contentDescription = "$updnLine 아이콘",
-                        modifier = Modifier
-                            .size(40.dp)
-                            .padding(end = 12.dp)
+                    LineChip(
+                        text = SubwayLineMap.getNameById(subwayId),
+                        textColor = lineColor
                     )
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = formatArrivalMessage(arvlMsg2),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = trainLineNm, fontSize = 14.sp, color = Color.Gray
-                        )
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(
+                        text = updnLine,
+                        style = MaterialTheme.typography.labelMedium.copy(color = subtle)
+                    )
+
+                    Spacer(Modifier.weight(1f))
+
+                    if (lstcarAt == "1") {
+                        LastTrainBadge()
                     }
                 }
-            }
 
-            if (lstcarAt == "1") {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .border(2.dp, Color.Red, shape = RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = "막차",
-                        color = Color.Red,
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = formatArrivalMessage(arvlMsg2),
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        color = onBg
+                    )
+                )
+
+                if (trainLineNm.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = trainLineNm,
+                        style = MaterialTheme.typography.bodySmall.copy(color = subtle)
                     )
                 }
             }
         }
     }
+
+    @Composable
+    private fun LineChip(
+        text: String,
+        textColor: Color,
+        modifier: Modifier = Modifier
+    ) {
+        Box(
+            modifier = modifier
+                .background(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = textColor.copy(alpha = 0.9f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = textColor,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+    }
+
+    @Composable
+    private fun LastTrainBadge(modifier: Modifier = Modifier) {
+        val danger = Color(0xFFD32F2F)
+        Box(
+            modifier = modifier
+                .background(
+                    color = danger.copy(alpha = 0.10f),
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = danger,
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = "막차",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = danger,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+
 }
 
 fun formatArrivalMessage(raw: String): String {
     var result = raw
 
-    // 1. "[숫자]" 형식 괄호 제거
     val bracketPattern = Regex("""\[(\d+)]""")
     result = result.replace(bracketPattern) { it.groupValues[1] }
 
-    // 2. " 후"로 끝나면 "도착 예정" 붙이기
     if (result.trim().endsWith("후")) {
         result += " 도착 예정"
     }

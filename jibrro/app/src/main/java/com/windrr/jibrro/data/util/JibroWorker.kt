@@ -11,8 +11,6 @@ import com.windrr.jibrro.domain.usecase.RegisterAlarmUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
