@@ -13,10 +13,12 @@ import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
@@ -47,7 +49,10 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -79,7 +84,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         val stationRepo = SubwayStationRepositoryImpl(assetDataSource)
         val getStationListUseCase = GetStationListUseCase(stationRepo)
         val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-        val closestStation = latLng?.let { (lat, lng) ->
+        var closestStation = latLng?.let { (lat, lng) ->
             stations.minByOrNull { s -> distanceInMeters(lat, lng, s.lat, s.lng) }
         }
 
@@ -88,12 +93,20 @@ class ArrivalInfoWidget : GlanceAppWidget() {
         val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
         val getArrivals = entryPoint.getSubwayArrivalDataUseCase()
 
-        val arrival = closestStation?.let { station ->
-            val result = withContext(Dispatchers.IO) {
-                getArrivals.execute(statnNm = station.name)
+        val arrival = if (latLng == null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                delay(2000)
+                val manager = GlanceAppWidgetManager(context)
+                val ids = manager.getGlanceIds(ArrivalInfoWidget::class.java)
+                ids.forEach { ArrivalInfoWidget().update(context, it) }
             }
-            result
-        } ?: Result.Error("No closest station found")
+            Result.Loading()
+        } else {
+            closestStation = stations.minByOrNull { s -> distanceInMeters(latLng.first, latLng.second, s.lat, s.lng) }
+            closestStation?.let { station ->
+                withContext(Dispatchers.IO) { getArrivals.execute(statnNm = station.name) }
+            } ?: Result.Error("No closest station found")
+        }
 
         val fetchedTime: Long? = if (arrival is Result.Success) System.currentTimeMillis() else null
 
