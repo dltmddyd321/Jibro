@@ -6,10 +6,12 @@ import com.windrr.jibrro.domain.repository.StationRepository
 import com.windrr.jibrro.domain.repository.SubwayRepository
 import com.windrr.jibrro.domain.usecase.DeleteStationUseCase
 import com.windrr.jibrro.domain.usecase.GetCheckStationListUseCase
+import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.domain.usecase.SaveStationListUseCase
+import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.SetLastTrainNotificationUseCase
 import dagger.Module
 import dagger.Provides
@@ -56,5 +58,17 @@ object UseCaseModule {
     @Singleton
     fun provideSetLastTrainNotificationUseCase(repo: SettingsRepository): SetLastTrainNotificationUseCase {
         return SetLastTrainNotificationUseCase(repo)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetDestinationUseCase(repo: SettingsRepository): GetDestinationUseCase {
+        return GetDestinationUseCase(repo)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSetDestinationUseCase(repo: SettingsRepository): SetDestinationUseCase {
+        return SetDestinationUseCase(repo)
     }
 }

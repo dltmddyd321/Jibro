@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,6 +39,8 @@ import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -377,6 +380,21 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     })
+                }, floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = {
+                            // 목적지 추가 로직 호출
+                        },
+                        containerColor = Color(0xFFFFF176), // 밝은 형광 노랑
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "목적지 추가",
+                            tint = Color.Black
+                        )
+                    }
                 }) { innerPadding ->
                 Box(
                     modifier = Modifier

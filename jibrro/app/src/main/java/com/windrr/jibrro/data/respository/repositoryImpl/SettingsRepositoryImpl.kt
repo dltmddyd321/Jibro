@@ -18,4 +18,12 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setLastTrainNotification(enabled: Boolean) {
         SettingsDataStore.setLastTrainNotification(context, enabled)
     }
+
+    override fun getDestination(): Flow<String> {
+        return SettingsDataStore.getDestinationFlow(context)
+    }
+
+    override suspend fun setDestination(destination: String) {
+        SettingsDataStore.setDestination(context, destination)
+    }
 }
