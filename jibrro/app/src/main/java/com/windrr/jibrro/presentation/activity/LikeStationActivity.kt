@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,6 +50,7 @@ import com.windrr.jibrro.data.model.CheckStation
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
+import com.windrr.jibrro.presentation.viewmodel.SettingsViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -56,11 +58,15 @@ import dagger.hilt.android.AndroidEntryPoint
 class LikeStationActivity : ComponentActivity() {
     private val stationViewModel: StationViewModel by viewModels()
     private val checkStationViewModel: CheckStationViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val destinationMode = intent?.getStringExtra("startMode") == "destination"
+
         setContent {
             JibrroTheme {
 
@@ -180,6 +186,7 @@ class LikeStationActivity : ComponentActivity() {
                             StationListScreen(
                                 checkedStates = checkedStates,
                                 stations = stationList,
+                                destinationMode = destinationMode,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
@@ -193,8 +200,16 @@ class LikeStationActivity : ComponentActivity() {
     fun StationListScreen(
         checkedStates: MutableMap<String, Boolean>,
         stations: List<SubwayStation>,
+        destinationMode: Boolean,
         modifier: Modifier = Modifier
     ) {
+        val destination by settingsViewModel.destination.collectAsState()
+        var selectedDestinationId by remember { mutableStateOf(destination) }
+
+        LaunchedEffect(destination) {
+            selectedDestinationId = destination
+        }
+
         val combinedLinesByName = remember(stations) {
             stations
                 .groupBy { it.name }
@@ -213,17 +228,30 @@ class LikeStationActivity : ComponentActivity() {
         LazyColumn(modifier = modifier.fillMaxSize()) {
             items(distinctStations) { station ->
                 val stationId = station.bldn_id
-                val checked = checkedStates[stationId] ?: false
                 val displayLine = combinedLinesByName[station.name] ?: station.line
 
-                StationListItem(
-                    name = station.name,
-                    line = displayLine,
-                    checked = checked,
-                    onCheckedChange = { isChecked ->
-                        checkedStates[stationId] = isChecked
-                    }
-                )
+                if (destinationMode) {
+                    val isSelected = stationId == selectedDestinationId
+                    StationListItem(
+                        name = station.name,
+                        line = displayLine,
+                        checked = isSelected,
+                        destinationMode = true,
+                        onCheckedChange = {
+                            selectedDestinationId = stationId
+                            settingsViewModel.setDestination(stationId)
+                        }
+                    )
+                } else {
+                    val isChecked = checkedStates[stationId] ?: false
+                    StationListItem(
+                        name = station.name,
+                        line = displayLine,
+                        checked = isChecked,
+                        destinationMode = false,
+                        onCheckedChange = { checkedStates[stationId] = it }
+                    )
+                }
             }
         }
     }
@@ -233,6 +261,7 @@ class LikeStationActivity : ComponentActivity() {
         name: String,
         line: String,
         checked: Boolean,
+        destinationMode: Boolean,
         onCheckedChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier
     ) {
@@ -257,10 +286,17 @@ class LikeStationActivity : ComponentActivity() {
                 )
             }
 
-            Checkbox(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
+            if (destinationMode) {
+                RadioButton(
+                    selected = checked,
+                    onClick = { onCheckedChange(true) }
+                )
+            } else {
+                Checkbox(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange
+                )
+            }
         }
     }
 }

@@ -383,9 +383,12 @@ class MainActivity : ComponentActivity() {
                 }, floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
-                            // 목적지 추가 로직 호출
+                            val intent = Intent(context, LikeStationActivity::class.java).apply {
+                                putExtra("startMode", "destination")
+                            }
+                            context.startActivity(intent)
                         },
-                        containerColor = Color(0xFFFFF176), // 밝은 형광 노랑
+                        containerColor = Color(0xFF76FF03), // 밝은 형광 노랑
                         shape = RoundedCornerShape(16.dp),
                         elevation = FloatingActionButtonDefaults.elevation(8.dp)
                     ) {
