@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -79,6 +80,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_arrival_info" />
         </receiver>
+
+        <service
+            android:name=".infrastructure.LocationForegroundService"
+            android:foregroundServiceType="location"
+            android:exported="false"/>
     </application>
 
 </manifest>
