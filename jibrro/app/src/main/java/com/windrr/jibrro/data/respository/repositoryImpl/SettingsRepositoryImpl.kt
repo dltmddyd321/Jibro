@@ -1,6 +1,7 @@
 package com.windrr.jibrro.data.respository.repositoryImpl
 
 import android.content.Context
+import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.data.util.SettingsDataStore
 import com.windrr.jibrro.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,11 +20,11 @@ class SettingsRepositoryImpl @Inject constructor(
         SettingsDataStore.setLastTrainNotification(context, enabled)
     }
 
-    override fun getDestination(): Flow<String> {
+    override fun getDestination(): Flow<Destination?> {
         return SettingsDataStore.getDestinationFlow(context)
     }
 
-    override suspend fun setDestination(destination: String) {
+    override suspend fun setDestination(destination: Destination) {
         SettingsDataStore.setDestination(context, destination)
     }
 }

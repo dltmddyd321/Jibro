@@ -74,11 +74,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.infrastructure.LocationForegroundService
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
 import com.windrr.jibrro.presentation.component.LocationPermissionDialog
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
+import com.windrr.jibrro.presentation.viewmodel.SettingsViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SubwayArrivalDataViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -92,11 +94,23 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationHelper: LocationHelper
+    private val settingsViewModel: SettingsViewModel by viewModels()
     private val stationViewModel: StationViewModel by viewModels()
     private val subwayArrivalViewModel: SubwayArrivalDataViewModel by viewModels()
     private val checkStationViewModel: CheckStationViewModel by viewModels()
     private var lat = 0.0
     private var lng = 0.0
+
+    private fun executeLocationTracking() {
+        val isTrackingDestination = settingsViewModel.destination.value != null
+        if (isTrackingDestination) {
+            val intent = Intent(applicationContext, LocationForegroundService::class.java)
+            ContextCompat.startForegroundService(applicationContext, intent)
+        } else {
+            val intent = Intent(applicationContext, LocationForegroundService::class.java)
+            applicationContext.stopService(intent)
+        }
+    }
 
     private fun isGetLocationPermission(): Boolean {
         return when {
@@ -116,6 +130,8 @@ class MainActivity : ComponentActivity() {
         lat = intent.getDoubleExtra("lat", 0.0)
         lng = intent.getDoubleExtra("lng", 0.0)
         stationViewModel.findClosestStation(lat, lng)
+
+        executeLocationTracking()
 
         enableEdgeToEdge()
         setContent {

@@ -1,11 +1,12 @@
 package com.windrr.jibrro.domain.repository
 
+import com.windrr.jibrro.data.model.Destination
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
     fun getLastTrainNotification(): Flow<Boolean>
     suspend fun setLastTrainNotification(enabled: Boolean)
 
-    fun getDestination(): Flow<String>
-    suspend fun setDestination(destination: String)
+    fun getDestination(): Flow<Destination?>
+    suspend fun setDestination(destination: Destination)
 }

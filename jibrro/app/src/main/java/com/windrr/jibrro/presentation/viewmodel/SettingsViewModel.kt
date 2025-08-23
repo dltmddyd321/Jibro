@@ -2,6 +2,7 @@ package com.windrr.jibrro.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
@@ -33,7 +34,7 @@ class SettingsViewModel @Inject constructor(
     val destination = getDestinationUseCase().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
-        ""
+         null
     )
 
     fun setLastTrainEnabled(enabled: Boolean) {
@@ -42,7 +43,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setDestination(destination: String) {
+    fun setDestination(destination: Destination) {
         viewModelScope.launch {
             setDestinationUseCase(destination)
         }

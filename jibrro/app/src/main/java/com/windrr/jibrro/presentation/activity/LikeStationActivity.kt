@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.windrr.jibrro.data.model.CheckStation
+import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
@@ -204,10 +205,10 @@ class LikeStationActivity : ComponentActivity() {
         modifier: Modifier = Modifier
     ) {
         val destination by settingsViewModel.destination.collectAsState()
-        var selectedDestinationId by remember { mutableStateOf(destination) }
+        var selectedDestination by remember { mutableStateOf(destination) }
 
         LaunchedEffect(destination) {
-            selectedDestinationId = destination
+            selectedDestination = destination
         }
 
         val combinedLinesByName = remember(stations) {
@@ -231,15 +232,15 @@ class LikeStationActivity : ComponentActivity() {
                 val displayLine = combinedLinesByName[station.name] ?: station.line
 
                 if (destinationMode) {
-                    val isSelected = stationId == selectedDestinationId
+                    val isSelected = stationId == selectedDestination?.id
                     StationListItem(
                         name = station.name,
                         line = displayLine,
                         checked = isSelected,
                         destinationMode = true,
                         onCheckedChange = {
-                            selectedDestinationId = stationId
-                            settingsViewModel.setDestination(stationId)
+                            selectedDestination = Destination(station.bldn_id, station.lat, station.lng)
+                            selectedDestination?.let { settingsViewModel.setDestination(it) }
                         }
                     )
                 } else {
