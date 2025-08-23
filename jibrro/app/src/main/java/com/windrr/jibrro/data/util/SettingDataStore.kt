@@ -14,6 +14,7 @@ object SettingsDataStore {
     private val Context.dataStore by preferencesDataStore(name = "settings")
     private val LAST_TRAIN_KEY = booleanPreferencesKey("last_train_enabled")
     private val DEST_ID = stringPreferencesKey("destination_id")
+    private val DEST_NAME = stringPreferencesKey("destination_name")
     private val DEST_LAT = doublePreferencesKey("destination_lat")
     private val DEST_LNG = doublePreferencesKey("destination_lng")
 
@@ -32,15 +33,17 @@ object SettingsDataStore {
     fun getDestinationFlow(context: Context): Flow<Destination?> {
         return context.dataStore.data.map { prefs ->
             val id = prefs[DEST_ID] ?: return@map null
+            val name = prefs[DEST_NAME] ?: return@map null
             val lat = prefs[DEST_LAT] ?: return@map null
             val lng = prefs[DEST_LNG] ?: return@map null
-            Destination(id, lat, lng)
+            Destination(id, name, lat, lng)
         }
     }
 
     suspend fun setDestination(context: Context, destination: Destination) {
         context.dataStore.edit { prefs ->
             prefs[DEST_ID] = destination.id
+            prefs[DEST_NAME] = destination.name
             prefs[DEST_LAT] = destination.latitude
             prefs[DEST_LNG] = destination.longitude
         }

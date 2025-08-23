@@ -239,7 +239,7 @@ class LikeStationActivity : ComponentActivity() {
                         checked = isSelected,
                         destinationMode = true,
                         onCheckedChange = {
-                            selectedDestination = Destination(station.bldn_id, station.lat, station.lng)
+                            selectedDestination = Destination(station.bldn_id, station.name, station.lat, station.lng)
                             selectedDestination?.let { settingsViewModel.setDestination(it) }
                         }
                     )
