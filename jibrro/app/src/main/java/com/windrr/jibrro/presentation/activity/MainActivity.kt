@@ -101,17 +101,6 @@ class MainActivity : ComponentActivity() {
     private var lat = 0.0
     private var lng = 0.0
 
-    private fun executeLocationTracking() {
-        val isTrackingDestination = settingsViewModel.destination.value != null
-        if (isTrackingDestination) {
-            val intent = Intent(applicationContext, LocationForegroundService::class.java)
-            ContextCompat.startForegroundService(applicationContext, intent)
-        } else {
-            val intent = Intent(applicationContext, LocationForegroundService::class.java)
-            applicationContext.stopService(intent)
-        }
-    }
-
     private fun isGetLocationPermission(): Boolean {
         return when {
             ContextCompat.checkSelfPermission(
@@ -131,7 +120,14 @@ class MainActivity : ComponentActivity() {
         lng = intent.getDoubleExtra("lng", 0.0)
         stationViewModel.findClosestStation(lat, lng)
 
-        executeLocationTracking()
+        val isTrackingDestination = settingsViewModel.destination.value != null
+        if (isTrackingDestination) {
+            val intent = Intent(applicationContext, LocationForegroundService::class.java)
+            ContextCompat.startForegroundService(applicationContext, intent)
+        } else {
+            val intent = Intent(applicationContext, LocationForegroundService::class.java)
+            applicationContext.stopService(intent)
+        }
 
         enableEdgeToEdge()
         setContent {
@@ -219,7 +215,7 @@ class MainActivity : ComponentActivity() {
                         })
                 }
 
-                MainDrawerScreen(filteredFavorites, stationName) {
+                MainDrawerScreen(filteredFavorites, isTrackingDestination, stationName) {
                     if (isSubwayLoading) {
                         Column(
                             modifier = Modifier
@@ -314,6 +310,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun MainDrawerScreen(
         filteredFavorites: List<String>,
+        isTrackingDestination: Boolean,
         stationName: String?, content: @Composable () -> Unit
     ) {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -415,6 +412,25 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }) { innerPadding ->
+                val destinationName = settingsViewModel.destination.collectAsState().value?.name
+                if (isTrackingDestination && destinationName != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF76FF03))
+                            .padding(vertical = 8.dp, horizontal = 16.dp)
+                    ) {
+                        Text(
+                            text = "$destinationName 으로 이동 중",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            ),
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
