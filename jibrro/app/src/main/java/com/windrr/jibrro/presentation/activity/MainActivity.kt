@@ -77,6 +77,7 @@ import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.infrastructure.LocationForegroundService
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
+import com.windrr.jibrro.presentation.component.DestinationBanner
 import com.windrr.jibrro.presentation.component.LocationPermissionDialog
 import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
@@ -215,7 +216,7 @@ class MainActivity : ComponentActivity() {
                         })
                 }
 
-                MainDrawerScreen(filteredFavorites, isTrackingDestination, stationName) {
+                MainDrawerScreen(filteredFavorites, stationName) {
                     if (isSubwayLoading) {
                         Column(
                             modifier = Modifier
@@ -310,8 +311,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun MainDrawerScreen(
         filteredFavorites: List<String>,
-        isTrackingDestination: Boolean,
-        stationName: String?, content: @Composable () -> Unit
+        stationName: String?,
+        content: @Composable () -> Unit
     ) {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -412,24 +413,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }) { innerPadding ->
-                val destinationName = settingsViewModel.destination.collectAsState().value?.name
-                if (isTrackingDestination && destinationName != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFF76FF03))
-                            .padding(vertical = 8.dp, horizontal = 16.dp)
-                    ) {
-                        Text(
-                            text = "$destinationName 으로 이동 중",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            ),
-                            modifier = Modifier.align(Alignment.CenterStart)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
+                val destination by settingsViewModel.destination.collectAsState()
+                val destinationName = destination?.name
+                if (!destinationName.isNullOrEmpty()) {
+                    DestinationBanner(destinationName = destinationName)
                 }
                 Box(
                     modifier = Modifier
