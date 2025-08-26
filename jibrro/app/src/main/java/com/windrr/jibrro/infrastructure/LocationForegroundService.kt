@@ -56,9 +56,28 @@ class LocationForegroundService : Service() {
     }
 
     private fun startForegroundService() {
-        val notification = NotificationCompat.Builder(this, "location_channel")
+        val channelId = "location_channel"
+        val channelName = "실시간 위치 추적"
+
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "백그라운드에서 위치를 추적합니다."
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("실시간 위치 추적 중")
-            .setSmallIcon(R.drawable.jibro_text)
+            .setContentText("앱이 백그라운드에서 위치를 추적 중입니다.")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setOngoing(true)
             .build()
 
         startForeground(1, notification)

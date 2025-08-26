@@ -1,6 +1,7 @@
 package com.windrr.jibrro.presentation.activity
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -208,6 +209,7 @@ class LikeStationActivity : ComponentActivity() {
         var selectedDestination by remember { mutableStateOf(destination) }
 
         LaunchedEffect(destination) {
+            Log.i("목적지 검사", destination?.name ?: "")
             selectedDestination = destination
         }
 

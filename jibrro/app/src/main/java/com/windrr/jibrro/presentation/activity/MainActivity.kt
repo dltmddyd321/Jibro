@@ -72,6 +72,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.infrastructure.LocationForegroundService
@@ -121,13 +123,18 @@ class MainActivity : ComponentActivity() {
         lng = intent.getDoubleExtra("lng", 0.0)
         stationViewModel.findClosestStation(lat, lng)
 
-        val isTrackingDestination = settingsViewModel.destination.value != null
-        if (isTrackingDestination) {
-            val intent = Intent(applicationContext, LocationForegroundService::class.java)
-            ContextCompat.startForegroundService(applicationContext, intent)
-        } else {
-            val intent = Intent(applicationContext, LocationForegroundService::class.java)
-            applicationContext.stopService(intent)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                settingsViewModel.destination.collect { destination ->
+                    if (destination != null) {
+                        val intent = Intent(this@MainActivity, LocationForegroundService::class.java)
+                        ContextCompat.startForegroundService(applicationContext, intent)
+                    } else {
+                        val intent = Intent(this@MainActivity, LocationForegroundService::class.java)
+                        applicationContext.stopService(intent)
+                    }
+                }
+            }
         }
 
         enableEdgeToEdge()
@@ -413,18 +420,26 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }) { innerPadding ->
-                val destination by settingsViewModel.destination.collectAsState()
-                val destinationName = destination?.name
-                if (!destinationName.isNullOrEmpty()) {
-                    DestinationBanner(destinationName = destinationName)
-                }
-                Box(
+                val destination by settingsViewModel.destination.collectAsState(initial = null)
+
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+                        .padding(innerPadding)
                 ) {
-                    content()
+                    destination?.name?.let { name ->
+                        DestinationBanner(destinationName = name)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        content()
+                    }
                 }
             }
         }
