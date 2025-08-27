@@ -10,6 +10,8 @@ import com.windrr.jibrro.domain.usecase.SetLastTrainNotificationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,11 +33,19 @@ class SettingsViewModel @Inject constructor(
         false
     )
 
-    val destination = getDestinationUseCase().stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-         null
-    )
+    private val _destination = MutableStateFlow<Destination?>(null)
+    val destination: StateFlow<Destination?> = _destination
+
+    init {
+        viewModelScope.launch {
+            getDestinationUseCase().collect {
+                if (it != null) {
+                    _destination.value = it
+                    return@collect
+                }
+            }
+        }
+    }
 
     fun setLastTrainEnabled(enabled: Boolean) {
         viewModelScope.launch {
