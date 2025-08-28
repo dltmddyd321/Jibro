@@ -1,4 +1,4 @@
-package com.windrr.jibrro.receiver
+package com.windrr.jibrro.infrastructure
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -1,7 +1,9 @@
 package com.windrr.jibrro.infrastructure
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -12,10 +14,12 @@ import androidx.core.app.NotificationCompat
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
+import com.windrr.jibrro.util.Action.ACTION_STOP_SERVICE
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
@@ -53,6 +57,20 @@ class LocationForegroundService : Service() {
                 startLocationUpdates()
             }
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP_SERVICE) {
+            stopForegroundService()
+            return START_NOT_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun stopForegroundService() {
+        scope.cancel()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun startForegroundService() {
@@ -103,7 +121,8 @@ class LocationForegroundService : Service() {
 
                     if (stage != null && stage != lastNotifiedDistanceStage) {
                         lastNotifiedDistanceStage = stage
-                        val message = "${currentDestination?.name}까지 ${distanceMeters.toInt()}m 남았습니다"
+                        val message =
+                            "${currentDestination?.name}까지 ${distanceMeters.toInt()}m 남았습니다"
                         showDistanceNotification(message)
                     }
 
@@ -116,6 +135,7 @@ class LocationForegroundService : Service() {
         }
     }
 
+    @SuppressLint("LaunchActivityFromNotification")
     private fun showDistanceNotification(message: String) {
         val channelId = "destination_alert_channel"
         val notificationManager =
@@ -130,11 +150,23 @@ class LocationForegroundService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val stopIntent = Intent(this, LocationForegroundService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val pendingIntent = PendingIntent.getService(
+            this,
+            0,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("목적지 안내")
             .setContentText(message)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
             .build()
 
         notificationManager.notify(1001, notification)
