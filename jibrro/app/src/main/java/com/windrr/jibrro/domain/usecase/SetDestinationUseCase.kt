@@ -6,5 +6,5 @@ import com.windrr.jibrro.domain.repository.SettingsRepository
 class SetDestinationUseCase(
     private val repo: SettingsRepository
 ) {
-    suspend operator fun invoke(destination: Destination) = repo.setDestination(destination)
+    suspend operator fun invoke(destination: Destination?) = repo.setDestination(destination)
 }

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
+import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
 import com.windrr.jibrro.util.Action.ACTION_STOP_SERVICE
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -35,6 +36,8 @@ class LocationForegroundService : Service() {
 
     @Inject
     lateinit var getDestinationUseCase: GetDestinationUseCase
+    @Inject
+    lateinit var setDestinationUseCase: SetDestinationUseCase
     private val locationUpdateInterval = 5000L
     private var currentDestination: Destination? = null
     private var lastNotifiedDistanceStage: Int? = null
@@ -61,6 +64,7 @@ class LocationForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP_SERVICE) {
+            scope.launch { setDestinationUseCase.invoke(null) }
             stopForegroundService()
             return START_NOT_STICKY
         }

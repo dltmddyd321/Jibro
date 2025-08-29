@@ -8,5 +8,5 @@ interface SettingsRepository {
     suspend fun setLastTrainNotification(enabled: Boolean)
 
     fun getDestination(): Flow<Destination?>
-    suspend fun setDestination(destination: Destination)
+    suspend fun setDestination(destination: Destination?)
 }

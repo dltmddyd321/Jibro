@@ -40,12 +40,19 @@ object SettingsDataStore {
         }
     }
 
-    suspend fun setDestination(context: Context, destination: Destination) {
+    suspend fun setDestination(context: Context, destination: Destination?) {
         context.dataStore.edit { prefs ->
-            prefs[DEST_ID] = destination.id
-            prefs[DEST_NAME] = destination.name
-            prefs[DEST_LAT] = destination.latitude
-            prefs[DEST_LNG] = destination.longitude
+            if (destination == null) {
+                prefs.remove(DEST_ID)
+                prefs.remove(DEST_NAME)
+                prefs.remove(DEST_LAT)
+                prefs.remove(DEST_LNG)
+            } else {
+                prefs[DEST_ID] = destination.id
+                prefs[DEST_NAME] = destination.name
+                prefs[DEST_LAT] = destination.latitude
+                prefs[DEST_LNG] = destination.longitude
+            }
         }
     }
 }

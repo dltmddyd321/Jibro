@@ -24,7 +24,7 @@ class SettingsRepositoryImpl @Inject constructor(
         return SettingsDataStore.getDestinationFlow(context)
     }
 
-    override suspend fun setDestination(destination: Destination) {
+    override suspend fun setDestination(destination: Destination?) {
         SettingsDataStore.setDestination(context, destination)
     }
 }
