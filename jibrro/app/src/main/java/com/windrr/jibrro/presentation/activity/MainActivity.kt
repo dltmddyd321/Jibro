@@ -127,10 +127,12 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 settingsViewModel.destination.collect { destination ->
                     if (destination != null) {
-                        val intent = Intent(this@MainActivity, LocationForegroundService::class.java)
+                        val intent =
+                            Intent(this@MainActivity, LocationForegroundService::class.java)
                         ContextCompat.startForegroundService(applicationContext, intent)
                     } else {
-                        val intent = Intent(this@MainActivity, LocationForegroundService::class.java)
+                        val intent =
+                            Intent(this@MainActivity, LocationForegroundService::class.java)
                         applicationContext.stopService(intent)
                     }
                 }
@@ -362,6 +364,18 @@ class MainActivity : ComponentActivity() {
                             }
                             .padding(16.dp))
                     Text(
+                        "목적지 알림", modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                val intent =
+                                    Intent(context, LikeStationActivity::class.java).apply {
+                                        putExtra("startMode", "destination")
+                                    }
+                                context.startActivity(intent)
+                            }
+                            .padding(16.dp))
+                    Text(
                         "설정", modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -401,24 +415,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     })
-                }, floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = {
-                            val intent = Intent(context, LikeStationActivity::class.java).apply {
-                                putExtra("startMode", "destination")
-                            }
-                            context.startActivity(intent)
-                        },
-                        containerColor = Color(0xFF76FF03), // 밝은 형광 노랑
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = FloatingActionButtonDefaults.elevation(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "목적지 추가",
-                            tint = Color.Black
-                        )
-                    }
                 }) { innerPadding ->
                 val destination by settingsViewModel.destination.collectAsState(initial = null)
 
