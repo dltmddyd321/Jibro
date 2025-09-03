@@ -88,66 +88,54 @@ class LikeStationActivity : ComponentActivity() {
                 val focusManager = LocalFocusManager.current
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    text = "즐겨찾기",
-                                    style = MaterialTheme.typography.titleMedium
+                    modifier = Modifier.fillMaxSize(), topBar = {
+                        TopAppBar(title = {
+                            Text(
+                                text = if (destinationMode) "목적지 지정" else "즐겨찾기",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }, navigationIcon = {
+                            IconButton(onClick = { finish() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "뒤로 가기"
                                 )
-                            },
-                            navigationIcon = {
-                                IconButton(onClick = { finish() }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "뒤로 가기"
-                                    )
-                                }
-                            },
-                            actions = {
-                                TextButton(onClick = {
-                                    val checkedStationList = stationList.filter {
-                                        checkedStates[it.bldn_id] == true
-                                    }.map {
-                                        CheckStation(
-                                            id = it.bldn_id,
-                                            name = it.name,
-                                            line = it.line
-                                        )
-                                    }
-                                    val uncheckedStationList = stationList.filter {
-                                        checkedStates[it.bldn_id] != true
-                                    }.map {
-                                        CheckStation(
-                                            id = it.bldn_id,
-                                            name = it.name,
-                                            line = it.line
-                                        )
-                                    }
-
-                                    checkStationViewModel.saveCheckedStationList(checkedStationList)
-                                    checkStationViewModel.clearCheckedStationList(
-                                        uncheckedStationList
-                                    )
-
-                                    Toast.makeText(
-                                        this@LikeStationActivity,
-                                        "저장되었습니다",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    finish()
-                                }) {
-                                    Text(
-                                        text = "저장",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
                             }
-                        )
-                    }
-                ) { innerPadding ->
+                        }, actions = {
+                            TextButton(onClick = {
+                                val checkedStationList = stationList.filter {
+                                    checkedStates[it.bldn_id] == true
+                                }.map {
+                                    CheckStation(
+                                        id = it.bldn_id, name = it.name, line = it.line
+                                    )
+                                }
+                                val uncheckedStationList = stationList.filter {
+                                    checkedStates[it.bldn_id] != true
+                                }.map {
+                                    CheckStation(
+                                        id = it.bldn_id, name = it.name, line = it.line
+                                    )
+                                }
+
+                                checkStationViewModel.saveCheckedStationList(checkedStationList)
+                                checkStationViewModel.clearCheckedStationList(
+                                    uncheckedStationList
+                                )
+
+                                Toast.makeText(
+                                    this@LikeStationActivity, "저장되었습니다", Toast.LENGTH_SHORT
+                                ).show()
+                                finish()
+                            }) {
+                                Text(
+                                    text = "저장",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        })
+                    }) { innerPadding ->
                     Column(
                         modifier = Modifier
                             .padding(innerPadding)
@@ -170,9 +158,7 @@ class LikeStationActivity : ComponentActivity() {
                                         // 검색 버튼 누르면 실행
                                         stationViewModel.findStationByName(searchQuery)
                                         focusManager.clearFocus()
-                                    }
-                                )
-                            )
+                                    }))
                             Button(onClick = {
                                 stationViewModel.findStationByName(searchQuery)
                             }) {
@@ -185,6 +171,18 @@ class LikeStationActivity : ComponentActivity() {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                         } else {
+                            if (destinationMode) {
+                                Button(
+                                    onClick = {
+                                        settingsViewModel.setDestination(null)
+                                        finish()
+                                    }, modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp)
+                                ) {
+                                    Text(text = "목적지 초기화")
+                                }
+                            }
                             StationListScreen(
                                 checkedStates = checkedStates,
                                 stations = stationList,
@@ -214,12 +212,8 @@ class LikeStationActivity : ComponentActivity() {
         }
 
         val combinedLinesByName = remember(stations) {
-            stations
-                .groupBy { it.name }
-                .mapValues { (_, list) ->
-                    list.map { it.line }
-                        .flatMap { it.split('/').map(String::trim) }
-                        .distinct()
+            stations.groupBy { it.name }.mapValues { (_, list) ->
+                    list.map { it.line }.flatMap { it.split('/').map(String::trim) }.distinct()
                         .joinToString(" / ")
                 }
         }
@@ -241,10 +235,10 @@ class LikeStationActivity : ComponentActivity() {
                         checked = isSelected,
                         destinationMode = true,
                         onCheckedChange = {
-                            selectedDestination = Destination(station.bldn_id, station.name, station.lat, station.lng)
+                            selectedDestination =
+                                Destination(station.bldn_id, station.name, station.lat, station.lng)
                             selectedDestination?.let { settingsViewModel.setDestination(it) }
-                        }
-                    )
+                        })
                 } else {
                     val isChecked = checkedStates[stationId] ?: false
                     StationListItem(
@@ -252,8 +246,7 @@ class LikeStationActivity : ComponentActivity() {
                         line = displayLine,
                         checked = isChecked,
                         destinationMode = false,
-                        onCheckedChange = { checkedStates[stationId] = it }
-                    )
+                        onCheckedChange = { checkedStates[stationId] = it })
                 }
             }
         }
@@ -283,21 +276,16 @@ class LikeStationActivity : ComponentActivity() {
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = line,
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodySmall
+                    text = line, color = Color.Red, style = MaterialTheme.typography.bodySmall
                 )
             }
 
             if (destinationMode) {
                 RadioButton(
-                    selected = checked,
-                    onClick = { onCheckedChange(true) }
-                )
+                    selected = checked, onClick = { onCheckedChange(true) })
             } else {
                 Checkbox(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange
+                    checked = checked, onCheckedChange = onCheckedChange
                 )
             }
         }

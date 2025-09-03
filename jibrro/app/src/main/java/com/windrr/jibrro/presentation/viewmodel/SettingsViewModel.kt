@@ -53,7 +53,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setDestination(destination: Destination) {
+    fun setDestination(destination: Destination?) {
         viewModelScope.launch {
             setDestinationUseCase(destination)
         }
