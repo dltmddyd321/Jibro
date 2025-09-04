@@ -37,6 +37,10 @@ class SettingsViewModel @Inject constructor(
     val destination: StateFlow<Destination?> = _destination
 
     init {
+        refreshDestination()
+    }
+
+    fun refreshDestination() {
         viewModelScope.launch {
             getDestinationUseCase().collect {
                 if (it != null) {

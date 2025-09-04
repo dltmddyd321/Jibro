@@ -147,6 +147,8 @@ class MainActivity : ComponentActivity() {
                 val stationName by stationViewModel.closestStation.collectAsState()
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
                 var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
+                val destination by settingsViewModel.destination.collectAsState(initial = null)
+                var currentDestination by remember { mutableStateOf(destination) }
 
                 var currentLat by remember { mutableDoubleStateOf(lat) }
                 var currentLng by remember { mutableDoubleStateOf(lng) }
@@ -171,6 +173,7 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
+                            currentDestination = settingsViewModel.destination.value
                             checkStationViewModel.fetchCheckedStationList()
                             hasLocationPermission = isGetLocationPermission()
                             if (hasLocationPermission) {
@@ -416,7 +419,7 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                 }) { innerPadding ->
-                val destination by settingsViewModel.destination.collectAsState(initial = null)
+
 
                 Column(
                     modifier = Modifier
