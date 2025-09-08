@@ -45,7 +45,8 @@ class SettingsViewModel @Inject constructor(
             getDestinationUseCase().collect {
                 if (it != null) {
                     _destination.value = it
-                    return@collect
+                } else {
+                    _destination.value = null
                 }
             }
         }

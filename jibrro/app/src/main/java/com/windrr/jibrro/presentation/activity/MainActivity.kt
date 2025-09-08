@@ -75,6 +75,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.windrr.jibrro.R
+import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.infrastructure.LocationForegroundService
 import com.windrr.jibrro.infrastructure.LocationHelper
@@ -173,6 +174,7 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
+                            settingsViewModel.refreshDestination()
                             currentDestination = settingsViewModel.destination.value
                             checkStationViewModel.fetchCheckedStationList()
                             hasLocationPermission = isGetLocationPermission()
@@ -228,7 +230,7 @@ class MainActivity : ComponentActivity() {
                         })
                 }
 
-                MainDrawerScreen(filteredFavorites, stationName) {
+                MainDrawerScreen(filteredFavorites, stationName, destination) {
                     if (isSubwayLoading) {
                         Column(
                             modifier = Modifier
@@ -324,6 +326,7 @@ class MainActivity : ComponentActivity() {
     fun MainDrawerScreen(
         filteredFavorites: List<String>,
         stationName: String?,
+        destination: Destination?,
         content: @Composable () -> Unit
     ) {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
