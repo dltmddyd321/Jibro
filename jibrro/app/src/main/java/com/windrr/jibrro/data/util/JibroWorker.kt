@@ -45,7 +45,10 @@ class JibroWorker @AssistedInject constructor(
 
         val arrivalDataList = getSubwayArrivalDataUseCase.execute(statnNm = stationName).data ?: emptyList()
 
-        if (arrivalDataList.any { it.lstcarAt == "1" }) {
+        val lastTrain = arrivalDataList.filter { it.lstcarAt == "1" }
+
+        if (lastTrain.isNotEmpty()) {
+            val trainInfo = lastTrain.first().trainLineNm
             registerAlarmUseCase.invoke(System.currentTimeMillis())
         }
 
