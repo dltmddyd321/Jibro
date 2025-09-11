@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.windrr.jibrro.data.model.AlarmInfo
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.domain.usecase.RegisterAlarmUseCase
@@ -49,7 +50,7 @@ class JibroWorker @AssistedInject constructor(
 
         if (lastTrain.isNotEmpty()) {
             val trainInfo = lastTrain.first().trainLineNm
-            registerAlarmUseCase.invoke(System.currentTimeMillis())
+            registerAlarmUseCase.invoke(AlarmInfo(System.currentTimeMillis(), trainInfo))
         }
 
         return Result.success()

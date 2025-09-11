@@ -13,7 +13,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val channelId = "alarm_channel"
         val title = "Jibro"
-        val content = "인근 지하철 막차 운행입니다."
+        val content = intent.getStringExtra("arrivalInfo") ?: "인근 지하철 막차 운행입니다."
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
