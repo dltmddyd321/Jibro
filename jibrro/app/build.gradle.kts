@@ -70,7 +70,6 @@ dependencies {
     kapt("androidx.room:room-compiler:2.7.1")
     implementation(libs.play.services.location)
     val retrofitVersion = "2.9.0"
-    implementation("com.squareup.retrofit2:converter-simplexml:$retrofitVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
     implementation("com.google.code.gson:gson:2.10.1")
