@@ -1,0 +1,108 @@
+
+> Task :printPackageTree
+/Users/iseung-yong/Documents/GitHub/Jibro/jibrro/app/src/main/java/com/windrr/jibrro
+├── data
+│   ├── api
+│   │   └── SubwayService.kt
+│   ├── db
+│   │   ├── SubwayDao.kt
+│   │   └── SubwayDatabase.kt
+│   ├── model
+│   │   ├── AlarmInfo.kt
+│   │   ├── CheckStation.kt
+│   │   ├── Destination.kt
+│   │   ├── ErrorMessage.kt
+│   │   ├── RealtimeArrival.kt
+│   │   ├── SubwayArrivalResponse.kt
+│   │   ├── SubwayInfo.kt
+│   │   └── SubwayStation.kt
+│   ├── repository
+│   │   ├── datasource
+│   │   │   ├── StationDataSource.kt
+│   │   │   ├── SubwayArrivalRemoteDataSource.kt
+│   │   │   └── SubwayLocalDataSource.kt
+│   │   ├── datasourceImpl
+│   │   │   ├── SubwayArrivalRemoteDataSourceImpl.kt
+│   │   │   └── SubwayLocalDataSourceImpl.kt
+│   │   └── repositoryImpl
+│   │       ├── AlarmRepositoryImpl.kt
+│   │       ├── CheckStationRepositoryImpl.kt
+│   │       ├── SettingsRepositoryImpl.kt
+│   │       ├── StationRepositoryImpl.kt
+│   │       └── SubwayRepositoryImpl.kt
+│   └── util
+│       ├── JibroWorker.kt
+│       ├── Result.kt
+│       ├── SettingDataStore.kt
+│       └── SubwayInfo.kt
+├── domain
+│   ├── repository
+│   │   ├── AlarmRepository.kt
+│   │   ├── CheckStationRepository.kt
+│   │   ├── SettingsRepository.kt
+│   │   ├── StationRepository.kt
+│   │   └── SubwayRepository.kt
+│   └── usecase
+│       ├── DeleteStationUseCase.kt
+│       ├── GetCheckStationListUseCase.kt
+│       ├── GetDestinationUseCase.kt
+│       ├── GetLastTrainNotificationUseCase.kt
+│       ├── GetStationListUseCase.kt
+│       ├── GetSubwayArrivalDataUseCase.kt
+│       ├── RegisterAlarmUseCase.kt
+│       ├── SaveStationListUseCase.kt
+│       ├── SetDestinationUseCase.kt
+│       └── SetLastTrainNotificationUseCase.kt
+├── infrastructure
+│   ├── AppCore.kt
+│   ├── BootReceiver.kt
+│   ├── LocationForegroundService.kt
+│   └── LocationHelper.kt
+├── presentation
+│   ├── activity
+│   │   ├── LikeStationActivity.kt
+│   │   ├── MainActivity.kt
+│   │   ├── SettingsActivity.kt
+│   │   ├── SplashActivity.kt
+│   │   └── ui
+│   │       └── theme
+│   │           ├── Color.kt
+│   │           ├── Theme.kt
+│   │           └── Type.kt
+│   ├── alarm
+│   │   └── AlarmReceiver.kt
+│   ├── component
+│   │   ├── AlarmPermissionModal.kt
+│   │   ├── BannerAdView.kt
+│   │   ├── DestinationBanner.kt
+│   │   └── LocationPermissionDialog.kt
+│   ├── di
+│   │   ├── DatabaseModule.kt
+│   │   ├── LocalDataModule.kt
+│   │   ├── LocationModule.kt
+│   │   ├── NetworkModule.kt
+│   │   ├── RemoteDataModule.kt
+│   │   ├── RepositoryModule.kt
+│   │   ├── StationModule.kt
+│   │   └── UseCaseModule.kt
+│   ├── ui
+│   │   └── theme
+│   │       ├── Color.kt
+│   │       ├── Theme.kt
+│   │       └── Type.kt
+│   ├── viewmodel
+│   │   ├── CheckStationViewModel.kt
+│   │   ├── SettingsViewModel.kt
+│   │   ├── StationViewModel.kt
+│   │   └── SubwayArrivalDataViewModel.kt
+│   └── widget
+│       ├── ArrivalInfoWidget.kt
+│       ├── ArrivalInfoWidgetReceiver.kt
+│       └── action
+│           └── RefreshAction.kt
+└── util
+    └── Action.kt
+
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 executed
