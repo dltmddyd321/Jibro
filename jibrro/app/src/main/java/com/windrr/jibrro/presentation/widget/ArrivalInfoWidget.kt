@@ -18,7 +18,6 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
@@ -36,8 +35,8 @@ import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayStation
-import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
-import com.windrr.jibrro.data.respository.repositoryImpl.SubwayStationRepositoryImpl
+import com.windrr.jibrro.data.repository.datasource.StationAssetDataSource
+import com.windrr.jibrro.data.repository.repositoryImpl.SubwayStationRepositoryImpl
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase

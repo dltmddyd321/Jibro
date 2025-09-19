@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.respository.datasource
+package com.windrr.jibrro.data.repository.datasource
 
 import android.content.Context
 import android.util.Log

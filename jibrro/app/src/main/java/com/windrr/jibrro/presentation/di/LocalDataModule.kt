@@ -1,8 +1,8 @@
 package com.windrr.jibrro.presentation.di
 
 import com.windrr.jibrro.data.db.SubwayDao
-import com.windrr.jibrro.data.respository.datasource.SubwayLocalDataSource
-import com.windrr.jibrro.data.respository.datasourceImpl.SubwayLocalDataSourceImpl
+import com.windrr.jibrro.data.repository.datasource.SubwayLocalDataSource
+import com.windrr.jibrro.data.repository.datasourceImpl.SubwayLocalDataSourceImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

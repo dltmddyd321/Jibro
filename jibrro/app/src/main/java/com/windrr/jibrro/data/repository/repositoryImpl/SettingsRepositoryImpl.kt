@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.respository.repositoryImpl
+package com.windrr.jibrro.data.repository.repositoryImpl
 
 import android.content.Context
 import com.windrr.jibrro.data.model.Destination

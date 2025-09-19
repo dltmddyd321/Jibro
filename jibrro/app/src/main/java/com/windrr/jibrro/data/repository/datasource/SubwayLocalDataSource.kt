@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.respository.datasource
+package com.windrr.jibrro.data.repository.datasource
 
 import com.windrr.jibrro.data.model.CheckStation
 import kotlinx.coroutines.flow.Flow

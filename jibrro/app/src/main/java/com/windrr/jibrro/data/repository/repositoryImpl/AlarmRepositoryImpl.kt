@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.respository.repositoryImpl
+package com.windrr.jibrro.data.repository.repositoryImpl
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager

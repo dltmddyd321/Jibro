@@ -1,8 +1,8 @@
-package com.windrr.jibrro.data.respository.repositoryImpl
+package com.windrr.jibrro.data.repository.repositoryImpl
 
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.domain.repository.StationRepository
-import com.windrr.jibrro.data.respository.datasource.StationAssetDataSource
+import com.windrr.jibrro.data.repository.datasource.StationAssetDataSource
 import javax.inject.Inject
 
 class SubwayStationRepositoryImpl @Inject constructor(

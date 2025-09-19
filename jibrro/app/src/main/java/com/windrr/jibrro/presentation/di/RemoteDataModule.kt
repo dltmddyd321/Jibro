@@ -1,8 +1,8 @@
 package com.windrr.jibrro.presentation.di
 
 import com.windrr.jibrro.data.api.SubwayApiService
-import com.windrr.jibrro.data.respository.datasource.SubwayArrivalRemoteDataSource
-import com.windrr.jibrro.data.respository.datasourceImpl.SubwayArrivalRemoteDataSourceImpl
+import com.windrr.jibrro.data.repository.datasource.SubwayArrivalRemoteDataSource
+import com.windrr.jibrro.data.repository.datasourceImpl.SubwayArrivalRemoteDataSourceImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
