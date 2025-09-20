@@ -15,6 +15,7 @@ import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
+import com.windrr.jibrro.presentation.activity.MainActivity
 import com.windrr.jibrro.util.Action.ACTION_STOP_SERVICE
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,7 @@ class LocationForegroundService : Service() {
 
     @Inject
     lateinit var getDestinationUseCase: GetDestinationUseCase
+
     @Inject
     lateinit var setDestinationUseCase: SetDestinationUseCase
     private val locationUpdateInterval = 5000L
@@ -95,11 +97,20 @@ class LocationForegroundService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val launchIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("실시간 위치 추적 중")
             .setContentText("앱이 백그라운드에서 위치를 추적 중입니다.")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         startForeground(1, notification)
