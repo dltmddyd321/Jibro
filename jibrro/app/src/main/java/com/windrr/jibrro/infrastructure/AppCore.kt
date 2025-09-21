@@ -10,7 +10,6 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.google.android.gms.ads.MobileAds
 import com.windrr.jibrro.data.util.JibroWorker
 import com.windrr.jibrro.presentation.widget.ArrivalInfoWidget
 import dagger.hilt.android.HiltAndroidApp
@@ -29,7 +28,6 @@ class AppCore : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         registerActivityLifecycleCallbacks(LifeCycleCallback())
-        MobileAds.initialize(this)
         val request = PeriodicWorkRequestBuilder<JibroWorker>(
             15, TimeUnit.MINUTES
         ).build()
