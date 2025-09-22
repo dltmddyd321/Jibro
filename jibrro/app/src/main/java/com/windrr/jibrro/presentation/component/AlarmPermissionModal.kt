@@ -44,7 +44,7 @@ fun AlarmPermissionModal(onGranted: () -> Unit) {
         }
     )
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isNeedToPermissionCheck) {
         hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
@@ -73,28 +73,30 @@ fun AlarmPermissionModal(onGranted: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Button(
-                onClick = {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                },
-                enabled = !hasNotificationPermission
-            ) {
-                Text("알림 권한 요청")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ) {
+            if (!hasNotificationPermission) {
+                Button(
+                    onClick = {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                ) {
+                    Text("알림 권한 요청")
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Button(
-                onClick = {
-                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                    context.startActivity(intent)
-                },
-                enabled = !hasExactAlarmPermission
-            ) {
-                Text("정확한 알람 권한 (설정 이동)")
+            if (!hasExactAlarmPermission) {
+                Button(
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("정확한 알람 권한 (설정 이동)")
+                }
             }
         }
     }

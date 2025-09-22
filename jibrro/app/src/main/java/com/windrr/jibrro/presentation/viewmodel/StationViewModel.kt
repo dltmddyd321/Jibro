@@ -38,10 +38,10 @@ class StationViewModel @Inject constructor(
     }
 
     fun findStationByName(name: String) {
-        _stationList.value = if (name.isBlank()) {
+        _stationList.value = if (name.isEmpty()) {
             _allStations
         } else {
-            _allStations.filter { it.name.contains(name) }
+            _allStations.filter { it.name in name }
         }
     }
 
