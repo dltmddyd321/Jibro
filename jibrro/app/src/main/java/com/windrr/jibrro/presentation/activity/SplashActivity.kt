@@ -17,9 +17,11 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
+import com.windrr.jibrro.R
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.component.AlarmPermissionModal
+import com.windrr.jibrro.presentation.component.LocationPermissionPreviewModal
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -32,6 +34,7 @@ class SplashActivity : ComponentActivity() {
 
     private lateinit var locationPermissionLauncher: ActivityResultLauncher<String>
 
+    private val showLocationPermissionModal = mutableStateOf(false)
     private val showAlarmPermissionModal = mutableStateOf(false)
     private var lat: Double? = null
     private var lng: Double? = null
@@ -40,34 +43,57 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        showLocationPermissionModal.value = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED
+        showAlarmPermissionModal.value = false
 
         locationPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                showLocationPermissionModal.value = false
                 if (granted) {
-                    requestLastLocation()
-                } else {
                     if (!isAlarmPermissionGranted()) {
                         showAlarmPermissionModal.value = true
                     } else {
-                        navigateIfReady()
+                        requestLastLocation()
                     }
+                } else {
+                    Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
                 }
             }
 
         setContent {
             JibrroTheme {
-                if (showAlarmPermissionModal.value) {
+                if (showLocationPermissionModal.value) {
+                    LocationPermissionPreviewModal(
+                        screenshots = listOf(
+                            R.drawable.first,
+                            R.drawable.second,
+                            R.drawable.third
+                        ),
+                        title = "백그라운드 위치 사용 안내",
+                        body = "이 앱은 사용자 근처 지하철역 정보 제공을 위해 위치를 사용합니다. " +
+                                "앱을 사용하지 않을 때에도 목적지 도착 알림을 위해 주기적으로 기기 위치를 확인합니다. " +
+                                "설정에서 언제든 변경할 수 있습니다",
+                        onAgree = {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        },
+                        onExit = {
+                            finishAffinity()
+                        }
+                    )
+                } else if (showAlarmPermissionModal.value) {
                     AlarmPermissionModal(
                         onGranted = {
                             showAlarmPermissionModal.value = false
                             navigateIfReady()
                         }
                     )
+                } else {
+                    checkLocationPermissionAndFetch()
                 }
             }
         }
-
-        checkLocationPermissionAndFetch()
     }
 
     override fun onResume() {
