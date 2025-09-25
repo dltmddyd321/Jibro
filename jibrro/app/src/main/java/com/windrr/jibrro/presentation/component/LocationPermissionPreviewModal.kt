@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,8 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -82,7 +78,11 @@ fun LocationPermissionPreviewModal(
                         alignment = Alignment.TopCenter
                     )
                 } else {
-                    Box(Modifier.fillMaxSize().background(Color(0x11000000)))
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(Color(0x11000000))
+                    )
                 }
             }
         }
@@ -99,7 +99,11 @@ fun LocationPermissionPreviewModal(
                         .padding(4.dp)
                         .size(if (active) 8.dp else 6.dp)
                         .clip(RoundedCornerShape(50))
-                        .background(if (active) MaterialTheme.colorScheme.primary else Color(0x33000000))
+                        .background(
+                            if (active) MaterialTheme.colorScheme.primary else Color(
+                                0x33000000
+                            )
+                        )
                 )
             }
         }
@@ -109,9 +113,7 @@ fun LocationPermissionPreviewModal(
             style = MaterialTheme.typography.titleLarge,
             color = Color.Black,
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "명시적 공개 제목" }
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
         Text(
@@ -119,9 +121,7 @@ fun LocationPermissionPreviewModal(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.DarkGray,
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "명시적 공개 본문" }
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(20.dp))
@@ -164,7 +164,5 @@ fun DisclosureSample(
 @Preview
 @Composable
 fun DisclosureTest() {
-    DisclosureSample(onAgree = {
-
-    }) { }
+    DisclosureSample(onAgree = {}, onExit = {})
 }
