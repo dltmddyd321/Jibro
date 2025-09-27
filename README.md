@@ -148,32 +148,28 @@ app/src/main/java/com/windrr/jibrro
 ## 화면별 주요 기능
 ### MainActivity
 
-<table width="100%">
-  <tr valign="top">
-    <td width="360">
+
+<table>
+  <tr>
+    <td width="100%">
       <img src="./screen_shot/main.jpeg" alt="MainActivity" width="320" />
     </td>
+    <td>
 
-    <td style="padding-left:16px;">
-      <strong>주요 기능</strong>
-      <ul>
-        <li>현재 이동 방향/행선지 배너 표시</li>
-        <li>즐겨찾은 역의 실시간 도착 정보 카드</li>
-        <li>새로고침 액션(우상단)</li>
-        <li>위치/권한 상태에 따른 안내</li>
-      </ul>
+**주요 기능**
+- 현재 이동 방향/행선지 배너 표시
+- 즐겨찾은 역의 실시간 도착 정보 카드
+- 새로고침 액션(우상단)
+- 위치/권한 상태에 따른 안내
 
-      <strong>상태 변화</strong>
-      <ul>
-        <li>위치 이동 시 배너 문구/색상 변경</li>
-        <li>데이터 로딩/에러 토스트 또는 상태 뷰</li>
-      </ul>
+**상태 변화**
+- 위치 이동 시 배너 문구/색상 변경
+- 데이터 로딩/에러 토스트 또는 상태 뷰
 
-      <strong>탭/제스처</strong>
-      <ul>
-        <li>카드 탭 → 역 상세</li>
-        <li>스와이프 새로고침 <em>(있다면)</em></li>
-      </ul>
+**탭/제스처**
+- 카드 탭 → 역 상세
+- 스와이프 새로고침 *(있다면)*
+
     </td>
   </tr>
 </table>
