@@ -134,5 +134,20 @@ app/src/main/java/com/windrr/jibrro
   - component/ : Jetpack Compose 등 UI 컴포넌트
   - widget/ : 위젯 관련 코드
   - viewmodel/ : 화면 상태 및 UI 로직을 담당하는 ViewModel
+<br />
+
+## 사용 기술 스택
+  - Retrofit: 서울 지하철 정보 api를 통해 데이터를 수신받고 앱에서 필요한 형태로 변환하는 역할
+  - Hilt : 의존성 주입 자동화를 통해 수동으로 객체 생성 등의 보일러 플레이트 감소 역할
+  - Room : 사용자가 즐겨찾기로 등록한 지하철 역을 로컬에 저장하고 관리하는 역할
+  - Data Store : 사용자의 알람 설정 및 목적지 설정에 대한 정보를 로컬에 저장하고 관리하는 역할
+  - WorkManaer : 백그라운드로 사용자 인근 지하철 역 도착 정보를 주기적으로 확인하여 막차 정보에 따라 알람을 보내는 역할
+  - Compose & Glance : 인앱 UI 및 위젯을 구현하는데 사용
+<br />
+
+## 화면별 주요 기능
+### MainActivity
+
+
 
 
