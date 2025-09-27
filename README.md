@@ -147,7 +147,7 @@ app/src/main/java/com/windrr/jibrro
 
 ## 화면별 주요 기능
 ### MainActivity
-
+![메인 화면](./screen_shot/main.jpeg)
 
 
 
