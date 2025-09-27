@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# JSON 파일 보존
+-keep class **.R$* {
+    public static <fields>;
+}
+
+# assets 하위의 모든 파일 보존
+-keep class **.R$* { *; }
+-keepclassmembers class **.R$* { *; }
