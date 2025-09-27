@@ -1,4 +1,4 @@
-package com.windrr.jibrro.presentation.di
+package com.windrr.jibrro.domain.di
 
 import com.windrr.jibrro.domain.repository.CheckStationRepository
 import com.windrr.jibrro.domain.repository.SettingsRepository

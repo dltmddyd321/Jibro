@@ -1,4 +1,4 @@
-package com.windrr.jibrro.presentation.di
+package com.windrr.jibrro.infrastructure.di
 
 import android.content.Context
 import com.windrr.jibrro.infrastructure.LocationHelper

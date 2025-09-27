@@ -1,4 +1,4 @@
-package com.windrr.jibrro.presentation.di
+package com.windrr.jibrro.data.di
 
 import android.app.Application
 import androidx.room.Room

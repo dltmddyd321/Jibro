@@ -1,4 +1,4 @@
-package com.windrr.jibrro.presentation.di
+package com.windrr.jibrro.data.di
 
 import com.windrr.jibrro.data.repository.datasource.SubwayArrivalRemoteDataSource
 import com.windrr.jibrro.data.repository.datasource.SubwayLocalDataSource
