@@ -151,7 +151,7 @@ app/src/main/java/com/windrr/jibrro
 
 <table>
   <tr>
-    <td width="100%">
+    <td width="360">
       <img src="./screen_shot/main.jpeg" alt="MainActivity" width="320" />
     </td>
     <td>
@@ -159,7 +159,7 @@ app/src/main/java/com/windrr/jibrro
 **주요 기능**
 - 현재 이동 방향/행선지 배너 표시
 - 즐겨찾은 역의 실시간 도착 정보 카드
-- 새로고침 액션(우상단)
+- 새로고침 액션(우상단)ㅇㄴㅁㄹㅁㄴㄹㅇㄴㄹㅇㄴㄹㅇㄴㄹㄴㅇㄹㅇㄴㄹㅇㄴㄹㄴㅇ
 - 위치/권한 상태에 따른 안내
 
 **상태 변화**
