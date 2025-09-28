@@ -1,30 +1,27 @@
 package com.windrr.jibrro.data.repository.repositoryImpl
 
-import android.content.Context
 import com.windrr.jibrro.data.model.Destination
-import com.windrr.jibrro.data.util.SettingsDataStore
+import com.windrr.jibrro.data.repository.datasource.SettingsLocalDataSource
 import com.windrr.jibrro.domain.repository.SettingsRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class SettingsRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val localDataSource: SettingsLocalDataSource
 ) : SettingsRepository {
-
     override fun getLastTrainNotification(): Flow<Boolean> {
-        return SettingsDataStore.getLastTrainNotificationFlow(context)
+        return localDataSource.lastTrainNotification
     }
 
     override suspend fun setLastTrainNotification(enabled: Boolean) {
-        SettingsDataStore.setLastTrainNotification(context, enabled)
+        localDataSource.setLastTrainNotification(enabled)
     }
 
     override fun getDestination(): Flow<Destination?> {
-        return SettingsDataStore.getDestinationFlow(context)
+        return localDataSource.destination
     }
 
     override suspend fun setDestination(destination: Destination?) {
-        SettingsDataStore.setDestination(context, destination)
+        localDataSource.setDestination(destination)
     }
 }
