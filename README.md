@@ -262,3 +262,9 @@ app/src/main/java/com/windrr/jibrro
     </td>
   </tr>
 </table>
+
+## 추후 추가 기능 및 수정 사항
+- Widget Init 상황에서 즉시 데이터 Fetch 안되는 문제 처리
+- LikeStationActivity UI 개선
+- 최근 검색 목록 시스템 구성
+- TTS 기반 목적지 알림 구현
