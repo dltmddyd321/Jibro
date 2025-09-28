@@ -161,7 +161,7 @@ app/src/main/java/com/windrr/jibrro
 
 **즐겨찾기 기반 지정 지하철역 도착 정보 목록 제공**
 - CheckStationViewModel을 통해 사용자가 저장한 즐겨찾는 역 목록을 관리합니다.
-- 저장된 역 목록을 DB에 저장된 순서대로 섹션 구분하여 보여줍니다.
+- 저장된 역 목록을 DB에 저장된 순서대로 섹션 구분하여 LazyColumn으로 보여줍니다.
 - SubwayArrivalDataViewModel을 사용해 지하철 도착 정보를 가져오고 Card 아이템으로 표시합니다.
 - 막차의 경우 우측 상단 스티커 라벨을 Card에 추가 표시합니다.
 
@@ -233,6 +233,31 @@ app/src/main/java/com/windrr/jibrro
 - 목적지 선택 후, 저장 클릭 시 SettingsViewModel을 통해 저장됩니다.
 - 목적지 초기화 버튼을 통해 기존 목적지 정보를 Clear 할 수 있습니다.
 - 즐겨찾기와 동일한 화면 공유를 통해 역시 검색 기능을 제공합니다.
+  
+    </td>
+  </tr>
+</table>
+
+### 인근 지하철 역 도착 정보 위젯
+
+<table>
+  <tr>
+    <td width="360">
+      <img src="./screen_shot/widget.jpeg" alt="Widget" width="320" />
+    </td>
+    <td>
+
+**현재 위치 기반 역 조회**
+- LocationHelper를 사용해 사용자의 현재 위치를 가져옵니다.
+- StationAssetDataSource에서 역 목록을 로드하고, 가장 가까운 역을 찾습니다.
+
+**도착 정보 조회**
+- GetSubwayArrivalDataUseCase를 사용해 선택된 역의 실시간 도착 정보를 가져온 뒤, LazyColumn으로 목록을 표시합니다.
+- Result 타입을 사용해 로딩, 성공, 실패 상태를 처리하고 그에 따른 UI가 갱신됩니다.
+
+**수동 동기화 기능**
+- 새로고침 버튼을 통해 RefreshAction을 RefreshAction을 호출하고, Widget Update를 통해 최신 데이터로 갱신합니다.
+- 마지막 업데이트 시간을 표시하여 사용자에게 데이터 최신화 여부를 확인 가능하도록 지원합니다.
   
     </td>
   </tr>
