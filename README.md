@@ -146,7 +146,7 @@ app/src/main/java/com/windrr/jibrro
 <br />
 
 ## 화면별 주요 기능
-### MainActivity
+### 메인화면
 
 <table>
   <tr>
@@ -155,47 +155,85 @@ app/src/main/java/com/windrr/jibrro
     </td>
     <td>
 
-**주요 기능**
-- 현재 이동 방향/행선지 배너 표시
-- 즐겨찾은 역의 실시간 도착 정보 카드
-- 새로고침 액션(우상단)
-- 위치/권한 상태에 따른 안내              
+**위치 기반 기능**
+- LocationHelper를 사용해 사용자의 현재 위치(위도, 경도)를 가져옵니다.
+- 가장 가까운 지하철 역을 찾아 그에 대한 도착 정보 목록을 가장 최상단 섹션으로 보여줍니다.
 
-**상태 변화**
-- 위치 이동 시 배너 문구/색상 변경
-- 데이터 로딩/에러 토스트 또는 상태 뷰
+**즐겨찾기 기반 지정 지하철역 도착 정보 목록 제공**
+- CheckStationViewModel을 통해 사용자가 저장한 즐겨찾는 역 목록을 관리합니다.
+- 저장된 역 목록을 DB에 저장된 순서대로 섹션 구분하여 보여줍니다.
+- SubwayArrivalDataViewModel을 사용해 지하철 도착 정보를 가져오고 Card 아이템으로 표시합니다.
+- 막차의 경우 우측 상단 스티커 라벨을 Card에 추가 표시합니다.
 
-**탭/제스처**
-- 카드 탭 → 역 상세
-- 스와이프 새로고침 *(있다면)*
+**목적지 이동 중 표시**
+- SettingsViewModel을 통해 DataStore에서 등록된 목적지가 있는 검사하고 포그라운드 서비스 및 배너 표시 설정을 관리합니다.
+- DestinationBanner 컴포넌트를 통해 이동 중이라는 정보를 애니메이션 스타일로 나타냅니다.
 
+**사이드 메뉴**
+- DismissibleNavigationDrawer로 사이드 메뉴를 표시합니다.
+- 설정, 즐겨찾는 역 관리 등의 기능에 접근할 수 있습니다.
+
+**데이터 동기화**
+- 상단 수동 동기화 버튼을 통해 현재 목록에 지정된 지하철 역들의 모든 최신 도착 정보를 수신 받을 수 있습니다.
+  
     </td>
   </tr>
 </table>
 
-### MainActivity
+### 설정 화면
 
 <table>
   <tr>
     <td width="360">
-      <img src="./screen_shot/main.jpeg" alt="MainActivity" width="320" />
+      <img src="./screen_shot/settings.jpeg" alt="SettingsActivity" width="320" />
     </td>
     <td>
 
-**주요 기능**
-- 현재 이동 방향/행선지 배너 표시
-- 즐겨찾은 역의 실시간 도착 정보 카드
-- 새로고침 액션(우상단)
-- 위치/권한 상태에 따른 안내              
+**앱 버전 정보 표시**
+- packageManager를 사용해 앱 정보를 가져오고, 현재 설치된 앱의 버전 이름과 버전 코드를 표시합니다.
+- 클릭 시, Jibro의 플레이 스토어 화면으로 이동합니다.
+  
+**막차 알림 설정**
+- CheckBox 클릭으로 SettingsViewModel을 통해 막차 알림 설정을 관리합니다.
+- 해당 Bool 값을 저장함으로서 AlarmReceiver에서 필요에 따라 가장 가까운 지하철 역에 막차 정보가 뜨는 순간 알림을 팝업합니다.
+  
+    </td>
+  </tr>
+</table>
 
-**상태 변화**
-- 위치 이동 시 배너 문구/색상 변경
-- 데이터 로딩/에러 토스트 또는 상태 뷰
+### 즐겨찾기 지정 화면
 
-**탭/제스처**
-- 카드 탭 → 역 상세
-- 스와이프 새로고침 *(있다면)*
+<table>
+  <tr>
+    <td width="360">
+      <img src="./screen_shot/addline.jpeg" alt="LikeStationActivity" width="320" />
+    </td>
+    <td>
 
+**즐겨찾기 선택 기능**
+- 다중 선택이 가능한 체크 박스 리스트로 사용자가 원하는 지하철 역을 즐겨찾기로 등록해두고, 메인화면에서 도착 정보를 확인할 수 있습니다.
+- 저장 버튼을 클릭하면서 CheckStationViewModel을 통해 즐겨찾기 목록을 관리합니다.
+- 빠른 저장을 위해 지하철 역 검색 기능을 제공합니다.
+  
+    </td>
+  </tr>
+</table>
+
+### 목적지 지정 화면
+
+<table>
+  <tr>
+    <td width="360">
+      <img src="./screen_shot/search.jpeg" alt="DestinationActivity" width="320" />
+    </td>
+    <td>
+
+**목적지 선택 기능 제공**
+- 라디오 버튼 형식으로 하나의 선택만 가능하도록 지원합니다.
+- 목적지 선택 후, 저장 클릭 시 SettingsViewModel을 통해 저장됩니다.
+- 목적지 초기화 버튼을 통해 기존 목적지 정보를 Clear 할 수 있습니다.
+- 즐겨찾기와 동일한 화면 공유를 통해 역시 검색 기능을 제공합니다.
+  
     </td>
   </tr>
 </table>
