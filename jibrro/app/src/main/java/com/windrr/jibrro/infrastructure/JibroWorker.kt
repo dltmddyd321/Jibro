@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.util
+package com.windrr.jibrro.infrastructure
 
 import android.content.Context
 import android.util.Log
@@ -9,7 +9,6 @@ import com.windrr.jibrro.data.model.AlarmInfo
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.domain.usecase.RegisterAlarmUseCase
-import com.windrr.jibrro.infrastructure.LocationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlin.math.atan2

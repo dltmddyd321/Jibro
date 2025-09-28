@@ -10,7 +10,6 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.windrr.jibrro.data.util.JibroWorker
 import com.windrr.jibrro.presentation.widget.ArrivalInfoWidget
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope

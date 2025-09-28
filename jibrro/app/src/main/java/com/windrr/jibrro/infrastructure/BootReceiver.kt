@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.windrr.jibrro.data.util.JibroWorker
 import java.util.concurrent.TimeUnit
 
 class BootReceiver : BroadcastReceiver() {
