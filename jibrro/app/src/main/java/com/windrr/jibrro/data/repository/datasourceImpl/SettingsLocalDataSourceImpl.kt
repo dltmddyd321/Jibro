@@ -22,14 +22,36 @@ class SettingsLocalDataSourceImpl @Inject constructor(
     private val DEST_NAME = stringPreferencesKey("destination_name")
     private val DEST_LAT = doublePreferencesKey("destination_lat")
     private val DEST_LNG = doublePreferencesKey("destination_lng")
+    private val LAST_LAT = doublePreferencesKey("last_lat")
+    private val LAST_LNG = doublePreferencesKey("last_lng")
 
     override val lastTrainNotification: Flow<Boolean> =
         context.dataStore.data
             .map { preferences -> preferences[LAST_TRAIN_KEY] ?: false }
 
+    override val lastLat: Flow<Double?>
+        get() = context.dataStore.data
+            .map { prefs -> prefs[LAST_LAT] ?: return@map null }
+
+    override val lastLng: Flow<Double?>
+        get() = context.dataStore.data
+            .map { prefs -> prefs[LAST_LNG] ?: return@map null }
+
     override suspend fun setLastTrainNotification(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[LAST_TRAIN_KEY] = enabled
+        }
+    }
+
+    override suspend fun setLastLat(value: Double) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_LAT] = value
+        }
+    }
+
+    override suspend fun setLastLng(value: Double) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_LNG] = value
         }
     }
 

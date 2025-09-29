@@ -9,4 +9,10 @@ interface SettingsRepository {
 
     fun getDestination(): Flow<Destination?>
     suspend fun setDestination(destination: Destination?)
+
+    fun getLastLat(): Flow<Double?>
+    suspend fun setLastLat(lat: Double)
+
+    fun getLastLng(): Flow<Double?>
+    suspend fun setLastLng(lng: Double)
 }

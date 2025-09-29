@@ -1,12 +1,16 @@
 package com.windrr.jibrro.presentation.widget
 
 import SubwayLineMap
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
@@ -35,15 +39,20 @@ import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayStation
-import com.windrr.jibrro.data.repository.datasource.StationAssetDataSource
-import com.windrr.jibrro.data.repository.repositoryImpl.SubwayStationRepositoryImpl
 import com.windrr.jibrro.data.util.Result
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.SplashActivity
 import com.windrr.jibrro.presentation.activity.formatArrivalMessage
+import com.windrr.jibrro.presentation.ui.theme.AccentBlue
+import com.windrr.jibrro.presentation.ui.theme.Bg
+import com.windrr.jibrro.presentation.ui.theme.Danger
+import com.windrr.jibrro.presentation.ui.theme.OnBg
+import com.windrr.jibrro.presentation.ui.theme.Subtle
+import com.windrr.jibrro.presentation.ui.theme.Surface
 import com.windrr.jibrro.presentation.widget.action.RefreshAction
+import com.windrr.jibrro.util.distanceInMeters
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
@@ -53,35 +62,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface WidgetEntryPoint {
     fun getSubwayArrivalDataUseCase(): GetSubwayArrivalDataUseCase
+    fun getStationListUseCase(): GetStationListUseCase
 }
 
 class ArrivalInfoWidget : GlanceAppWidget() {
 
     private val appOpenAction = actionStartActivity<SplashActivity>()
-    private val Bg = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF121212))
-    private val Surface = ColorProvider(day = Color(0xFFF7F8FA), night = Color(0xFF1E1E1E))
-    private val OnBg = ColorProvider(day = Color(0xFF1B1B1B), night = Color(0xFFECECEC))
-    private val Subtle = ColorProvider(day = Color(0xFF6B7280), night = Color(0xFFB0B7C3))
-    private val AccentBlue = ColorProvider(day = Color(0xFF03A9F4), night = Color(0xFF81D4FA)) // 하늘색
-    private val Danger = ColorProvider(day = Color(0xFFD32F2F), night = Color(0xFFFFCDD2))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
         val locationHelper = LocationHelper(context)
-        val latLng = withContext(Dispatchers.IO) { locationHelper.getLastLocationSuspend() }
-
-        val assetDataSource = StationAssetDataSource(context)
-        val stationRepo = SubwayStationRepositoryImpl(assetDataSource)
-        val getStationListUseCase = GetStationListUseCase(stationRepo)
+        val latLng = locationHelper.getLastLocationSuspend()
+        val getStationListUseCase = entryPoint.getStationListUseCase()
         val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
         var closestStation = latLng?.let { (lat, lng) ->
             stations.minByOrNull { s -> distanceInMeters(lat, lng, s.lat, s.lng) }
@@ -89,19 +86,19 @@ class ArrivalInfoWidget : GlanceAppWidget() {
 
         Log.d("ArrivalInfoWidget", " $latLng Closest station: ${closestStation?.name}")
 
-        val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
         val getArrivals = entryPoint.getSubwayArrivalDataUseCase()
 
         val arrival = if (latLng == null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                delay(2000)
-                val manager = GlanceAppWidgetManager(context)
-                val ids = manager.getGlanceIds(ArrivalInfoWidget::class.java)
-                ids.forEach { ArrivalInfoWidget().update(context, it) }
-            }
-            Result.Loading()
+            Result.Error("No closest station found")
         } else {
-            closestStation = stations.minByOrNull { s -> distanceInMeters(latLng.first, latLng.second, s.lat, s.lng) }
+            closestStation = stations.minByOrNull { s ->
+                distanceInMeters(
+                    latLng.first,
+                    latLng.second,
+                    s.lat,
+                    s.lng
+                )
+            }
             closestStation?.let { station ->
                 withContext(Dispatchers.IO) { getArrivals.execute(statnNm = station.name) }
             } ?: Result.Error("No closest station found")
@@ -132,7 +129,7 @@ class ArrivalInfoWidget : GlanceAppWidget() {
                 lastUpdatedText = when (arrivalData) {
                     is Result.Success -> formatLastUpdated(fetchedTime)
                     is Result.Loading -> "갱신 중…"
-                    is Result.Error   -> "오류 발생"
+                    is Result.Error -> "오류 발생"
                 }
             )
 
@@ -298,20 +295,6 @@ class ArrivalInfoWidget : GlanceAppWidget() {
                 style = TextStyle(fontSize = 11.sp, color = Subtle)
             )
         }
-    }
-
-    private fun distanceInMeters(
-        lat1: Double, lon1: Double, lat2: Double, lon2: Double
-    ): Double {
-        val R = 6371000.0 // Earth radius in meters
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a =
-            sin(dLat / 2).pow(2.0) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(
-                dLon / 2
-            ).pow(2.0)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
     }
 
     private fun formatLastUpdated(millis: Long?): String {

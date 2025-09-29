@@ -9,4 +9,10 @@ interface SettingsLocalDataSource {
 
     val destination: Flow<Destination?>
     suspend fun setDestination(destination: Destination?)
+
+    val lastLat: Flow<Double?>
+    suspend fun setLastLat(value: Double)
+
+    val lastLng: Flow<Double?>
+    suspend fun setLastLng(value: Double)
 }

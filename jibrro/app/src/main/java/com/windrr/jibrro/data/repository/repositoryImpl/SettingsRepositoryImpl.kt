@@ -24,4 +24,20 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setDestination(destination: Destination?) {
         localDataSource.setDestination(destination)
     }
+
+    override fun getLastLat(): Flow<Double?> {
+        return localDataSource.lastLat
+    }
+
+    override suspend fun setLastLat(lat: Double) {
+        localDataSource.setLastLat(lat)
+    }
+
+    override fun getLastLng(): Flow<Double?> {
+        return localDataSource.lastLng
+    }
+
+    override suspend fun setLastLng(lng: Double) {
+        localDataSource.setLastLng(lng)
+    }
 }
