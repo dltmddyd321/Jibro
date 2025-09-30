@@ -66,8 +66,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -217,9 +219,15 @@ class MainActivity : ComponentActivity() {
                 }
 
                 //컴포저블이 화면에서 사라질 때 마지막 위치 정보 저장
-                DisposableEffect(Unit) {
+                DisposableEffect(lifecycleOwner) {
+                    val observer = object : DefaultLifecycleObserver {
+                        override fun onStop(owner: LifecycleOwner) {
+                            settingsViewModel.updateLocation(currentLat, currentLng)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose {
-                        settingsViewModel.updateLocation(currentLat, currentLng)
+                        lifecycleOwner.lifecycle.removeObserver(observer)
                     }
                 }
 

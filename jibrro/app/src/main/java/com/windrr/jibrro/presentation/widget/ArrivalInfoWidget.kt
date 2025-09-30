@@ -34,9 +34,8 @@ import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayStation
+import com.windrr.jibrro.domain.state.LocationState
 import com.windrr.jibrro.domain.state.Result
-import com.windrr.jibrro.domain.usecase.GetStationListUseCase
-import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.activity.SplashActivity
 import com.windrr.jibrro.presentation.activity.formatArrivalMessage
@@ -47,20 +46,11 @@ import com.windrr.jibrro.presentation.ui.theme.OnBg
 import com.windrr.jibrro.presentation.ui.theme.Subtle
 import com.windrr.jibrro.presentation.ui.theme.Surface
 import com.windrr.jibrro.presentation.widget.action.RefreshAction
+import com.windrr.jibrro.presentation.widget.di.WidgetEntryPoint
 import com.windrr.jibrro.util.distanceInMeters
-import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface WidgetEntryPoint {
-    fun getSubwayArrivalDataUseCase(): GetSubwayArrivalDataUseCase
-    fun getStationListUseCase(): GetStationListUseCase
-}
 
 class ArrivalInfoWidget : GlanceAppWidget() {
 
@@ -69,7 +59,24 @@ class ArrivalInfoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val entryPoint = EntryPoints.get(context, WidgetEntryPoint::class.java)
         val locationHelper = LocationHelper(context)
-        val latLng = locationHelper.getLastLocationSuspend()
+        var latLng = locationHelper.getLastLocationSuspend()
+
+        if (latLng == null) {
+            val lastLocation = withContext(Dispatchers.IO) {
+                entryPoint.getLastLocationUseCase().invoke()
+            }
+
+            when (lastLocation) {
+                is LocationState.Available -> {
+                    val lat = lastLocation.lat
+                    val lng = lastLocation.lng
+                    latLng = Pair(lat, lng)
+                }
+
+                is LocationState.Empty -> latLng = null
+            }
+        }
+
         val getStationListUseCase = entryPoint.getStationListUseCase()
         val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
         var closestStation = latLng?.let { (lat, lng) ->

@@ -3,9 +3,7 @@ package com.windrr.jibrro.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.data.model.Destination
-import com.windrr.jibrro.domain.state.LocationState
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
-import com.windrr.jibrro.domain.usecase.GetLastLocationUseCase
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.SetLastLocationUseCase
@@ -24,7 +22,6 @@ class SettingsViewModel @Inject constructor(
     private val setLastTrainNotificationUseCase: SetLastTrainNotificationUseCase,
     private val getDestinationUseCase: GetDestinationUseCase,
     private val setDestinationUseCase: SetDestinationUseCase,
-    private val getLastLocationUseCase: GetLastLocationUseCase,
     private val setLastLocationUseCase: SetLastLocationUseCase
 ) : ViewModel() {
 
@@ -68,12 +65,6 @@ class SettingsViewModel @Inject constructor(
             setDestinationUseCase(destination)
         }
     }
-
-    val lastLocation = getLastLocationUseCase().stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        LocationState.Empty
-    )
 
     fun updateLocation(lat: Double, lng: Double) {
         viewModelScope.launch {
