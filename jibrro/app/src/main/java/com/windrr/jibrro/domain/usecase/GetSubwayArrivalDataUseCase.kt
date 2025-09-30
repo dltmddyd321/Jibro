@@ -2,7 +2,7 @@ package com.windrr.jibrro.domain.usecase
 
 import com.windrr.jibrro.BuildConfig
 import com.windrr.jibrro.data.model.RealtimeArrival
-import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.state.Result
 import com.windrr.jibrro.domain.repository.SubwayRepository
 
 class GetSubwayArrivalDataUseCase(private val subwayRepository: SubwayRepository) {

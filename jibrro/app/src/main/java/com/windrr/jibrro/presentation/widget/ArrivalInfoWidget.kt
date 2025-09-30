@@ -1,23 +1,18 @@
 package com.windrr.jibrro.presentation.widget
 
 import SubwayLineMap
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -39,7 +34,7 @@ import androidx.glance.text.TextStyle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayStation
-import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.state.Result
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.infrastructure.LocationHelper
@@ -57,10 +52,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @EntryPoint

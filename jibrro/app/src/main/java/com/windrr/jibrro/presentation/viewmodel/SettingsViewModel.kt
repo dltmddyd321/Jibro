@@ -3,9 +3,12 @@ package com.windrr.jibrro.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.data.model.Destination
+import com.windrr.jibrro.domain.state.LocationState
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
+import com.windrr.jibrro.domain.usecase.GetLastLocationUseCase
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
+import com.windrr.jibrro.domain.usecase.SetLastLocationUseCase
 import com.windrr.jibrro.domain.usecase.SetLastTrainNotificationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +23,9 @@ class SettingsViewModel @Inject constructor(
     private val getLastTrainNotificationUseCase: GetLastTrainNotificationUseCase,
     private val setLastTrainNotificationUseCase: SetLastTrainNotificationUseCase,
     private val getDestinationUseCase: GetDestinationUseCase,
-    private val setDestinationUseCase: SetDestinationUseCase
+    private val setDestinationUseCase: SetDestinationUseCase,
+    private val getLastLocationUseCase: GetLastLocationUseCase,
+    private val setLastLocationUseCase: SetLastLocationUseCase
 ) : ViewModel() {
 
     // getUseCase()가 반환하는 Flow<Boolean>을 UI 생명주기(viewModelScope)에
@@ -61,6 +66,18 @@ class SettingsViewModel @Inject constructor(
     fun setDestination(destination: Destination?) {
         viewModelScope.launch {
             setDestinationUseCase(destination)
+        }
+    }
+
+    val lastLocation = getLastLocationUseCase().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        LocationState.Empty
+    )
+
+    fun updateLocation(lat: Double, lng: Double) {
+        viewModelScope.launch {
+            setLastLocationUseCase(lat, lng)
         }
     }
 }

@@ -1,14 +1,15 @@
 package com.windrr.jibrro.domain.usecase
 
-import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class SetDestinationUseCase(
+class SetLastLocationUseCase @Inject constructor(
     private val repo: SettingsRepository
 ) {
-    suspend operator fun invoke(destination: Destination?) = withContext(Dispatchers.IO) {
-        repo.setDestination(destination)
+    suspend operator fun invoke(lat: Double, lng: Double) = withContext(Dispatchers.IO) {
+        repo.setLastLat(lat)
+        repo.setLastLng(lng)
     }
 }

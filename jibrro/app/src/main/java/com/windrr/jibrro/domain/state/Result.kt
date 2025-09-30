@@ -1,4 +1,4 @@
-package com.windrr.jibrro.data.util
+package com.windrr.jibrro.domain.state
 
 sealed class Result<T>(
     val data: T? = null,

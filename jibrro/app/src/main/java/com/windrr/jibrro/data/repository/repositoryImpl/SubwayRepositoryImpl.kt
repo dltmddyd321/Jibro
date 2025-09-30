@@ -3,7 +3,7 @@ package com.windrr.jibrro.data.repository.repositoryImpl
 import com.windrr.jibrro.data.model.RealtimeArrival
 import com.windrr.jibrro.data.model.SubwayArrivalResponse
 import com.windrr.jibrro.data.repository.datasource.SubwayArrivalRemoteDataSource
-import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.state.Result
 import com.windrr.jibrro.domain.repository.SubwayRepository
 import retrofit2.Response
 

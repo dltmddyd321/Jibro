@@ -31,7 +31,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,8 +38,6 @@ import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +73,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.windrr.jibrro.R
 import com.windrr.jibrro.data.model.Destination
-import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.state.Result
 import com.windrr.jibrro.infrastructure.LocationForegroundService
 import com.windrr.jibrro.infrastructure.LocationHelper
 import com.windrr.jibrro.presentation.component.BannerAdView
@@ -147,14 +144,14 @@ class MainActivity : ComponentActivity() {
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val stationName by stationViewModel.closestStation.collectAsState()
                 val isSubwayLoading by stationViewModel.isLoading.collectAsState()
-                var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
                 val destination by settingsViewModel.destination.collectAsState(initial = null)
-                var currentDestination by remember { mutableStateOf(destination) }
+                val arrivalMap by subwayArrivalViewModel.arrivalMap.collectAsState()
 
+                var hasLocationPermission by remember { mutableStateOf(isGetLocationPermission()) }
+                var currentDestination by remember { mutableStateOf(destination) }
                 var currentLat by remember { mutableDoubleStateOf(lat) }
                 var currentLng by remember { mutableDoubleStateOf(lng) }
 
-                val arrivalMap by subwayArrivalViewModel.arrivalMap.collectAsState()
                 val saveStationNameList by checkStationViewModel.checkStationList.map { list -> list.map { it.name } }
                     .collectAsState(initial = emptyList())
                 val distinctFavorites = remember(saveStationNameList) {
@@ -170,7 +167,7 @@ class MainActivity : ComponentActivity() {
                     }.distinct()
                 }
 
-                Log.d("섹션 검사", "$sections")
+                // 생명주기 이벤트(ON_START)를 감지하여 여러 초기화 작업 수행
                 DisposableEffect(lifecycleOwner, stationName) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_START) {
@@ -216,6 +213,13 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(sections, hasLocationPermission) {
                     if (hasLocationPermission && sections.isNotEmpty()) {
                         subwayArrivalViewModel.refreshStations(sections)
+                    }
+                }
+
+                //컴포저블이 화면에서 사라질 때 마지막 위치 정보 저장
+                DisposableEffect(Unit) {
+                    onDispose {
+                        settingsViewModel.updateLocation(currentLat, currentLng)
                     }
                 }
 

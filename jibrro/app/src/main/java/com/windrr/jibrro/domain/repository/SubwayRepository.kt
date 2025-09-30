@@ -1,7 +1,7 @@
 package com.windrr.jibrro.domain.repository
 
 import com.windrr.jibrro.data.model.RealtimeArrival
-import com.windrr.jibrro.data.util.Result
+import com.windrr.jibrro.domain.state.Result
 
 interface SubwayRepository {
     suspend fun getSubwayArrivalData(
