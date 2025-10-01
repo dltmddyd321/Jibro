@@ -47,7 +47,6 @@ import com.windrr.jibrro.presentation.ui.theme.Subtle
 import com.windrr.jibrro.presentation.ui.theme.Surface
 import com.windrr.jibrro.presentation.widget.action.RefreshAction
 import com.windrr.jibrro.presentation.widget.di.WidgetEntryPoint
-import com.windrr.jibrro.util.distanceInMeters
 import dagger.hilt.EntryPoints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -77,31 +76,18 @@ class ArrivalInfoWidget : GlanceAppWidget() {
             }
         }
 
-        val getStationListUseCase = entryPoint.getStationListUseCase()
-        val stations = getStationListUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-        var closestStation = latLng?.let { (lat, lng) ->
-            stations.minByOrNull { s -> distanceInMeters(lat, lng, s.lat, s.lng) }
+        val getStationListUseCase = entryPoint.getClosestStationUseCase()
+        val closestStation = latLng?.let { (lat, lng) ->
+            getStationListUseCase.invoke(lat, lng)
         }
 
         Log.d("ArrivalInfoWidget", " $latLng Closest station: ${closestStation?.name}")
 
         val getArrivals = entryPoint.getSubwayArrivalDataUseCase()
 
-        val arrival = if (latLng == null) {
-            Result.Error("No closest station found")
-        } else {
-            closestStation = stations.minByOrNull { s ->
-                distanceInMeters(
-                    latLng.first,
-                    latLng.second,
-                    s.lat,
-                    s.lng
-                )
-            }
-            closestStation?.let { station ->
-                withContext(Dispatchers.IO) { getArrivals.execute(statnNm = station.name) }
-            } ?: Result.Error("No closest station found")
-        }
+        val arrival = closestStation?.let { station ->
+            withContext(Dispatchers.IO) { getArrivals.execute(statnNm = station.name) }
+        } ?: Result.Error("No closest station found")
 
         val fetchedTime: Long? = if (arrival is Result.Success) System.currentTimeMillis() else null
 

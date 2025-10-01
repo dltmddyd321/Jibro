@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.data.model.SubwayStation
+import com.windrr.jibrro.domain.usecase.GetClosestStationUseCase
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.util.distanceInMeters
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StationViewModel @Inject constructor(
-    private val getSubwayStationsUseCase: GetStationListUseCase
+    private val getSubwayStationsUseCase: GetStationListUseCase,
+    private val getClosestStationUseCase: GetClosestStationUseCase
 ) : ViewModel() {
 
     private val _closestStation = MutableStateFlow<String?>(null)
@@ -44,18 +46,16 @@ class StationViewModel @Inject constructor(
     fun findClosestStation(lat: Double, lng: Double) {
         viewModelScope.launch {
             _isLoading.value = true
-
-            val stations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-
-            Log.d("StationViewModel", "Valid stations count: ${stations.size}")
-            Log.d("StationViewModel", "Finding closest station to: ($lat, $lng)")
-
-            val closest = stations.minByOrNull {
-                distanceInMeters(lat, lng, it.lat, it.lng)
+            try {
+                val closestStation = getClosestStationUseCase(lat, lng)
+                _closestStation.value = closestStation?.name
+                Log.d("StationViewModel", "Closest station: ${closestStation?.name}")
+            } catch (e: Exception) {
+                _closestStation.value = null
+                Log.e("StationViewModel", "Error finding closest station", e)
+            } finally {
+                _isLoading.value = false
             }
-            Log.d("StationViewModel", "Closest station: ${closest?.name}")
-            _closestStation.value = closest?.name
-            _isLoading.value = false
         }
     }
 }
