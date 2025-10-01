@@ -16,6 +16,13 @@ app/src/main/java/com/windrr/jibrro
 │   ├── db
 │   │   ├── SubwayDao.kt
 │   │   └── SubwayDatabase.kt
+│   ├── di
+│   │   ├── DataStoreModule.kt
+│   │   ├── DatabaseModule.kt
+│   │   ├── LocalDataModule.kt
+│   │   ├── NetworkModule.kt
+│   │   ├── RemoteDataModule.kt
+│   │   └── RepositoryModule.kt
 │   ├── model
 │   │   ├── AlarmInfo.kt
 │   │   ├── CheckStation.kt
@@ -27,10 +34,13 @@ app/src/main/java/com/windrr/jibrro
 │   │   └── SubwayStation.kt
 │   ├── repository
 │   │   ├── datasource
+│   │   │   ├── SettingsLocalDataSource.kt
 │   │   │   ├── StationDataSource.kt
 │   │   │   ├── SubwayArrivalRemoteDataSource.kt
 │   │   │   └── SubwayLocalDataSource.kt
 │   │   ├── datasourceImpl
+│   │   │   ├── SettingsLocalDataSourceImpl.kt
+│   │   │   ├── StationDataSourceImpl.kt
 │   │   │   ├── SubwayArrivalRemoteDataSourceImpl.kt
 │   │   │   └── SubwayLocalDataSourceImpl.kt
 │   │   └── repositoryImpl
@@ -40,34 +50,45 @@ app/src/main/java/com/windrr/jibrro
 │   │       ├── StationRepositoryImpl.kt
 │   │       └── SubwayRepositoryImpl.kt
 │   └── util
-│       ├── JibroWorker.kt
-│       ├── Result.kt
-│       ├── SettingDataStore.kt
 │       └── SubwayInfo.kt
+├── di
 ├── domain
+│   ├── .DS_Store
+│   ├── di
+│   │   └── UseCaseModule.kt
 │   ├── repository
 │   │   ├── AlarmRepository.kt
 │   │   ├── CheckStationRepository.kt
 │   │   ├── SettingsRepository.kt
 │   │   ├── StationRepository.kt
 │   │   └── SubwayRepository.kt
+│   ├── state
+│   │   ├── LocationState.kt
+│   │   └── Result.kt
 │   └── usecase
 │       ├── DeleteStationUseCase.kt
 │       ├── GetCheckStationListUseCase.kt
+│       ├── GetClosestStationUseCase.kt
 │       ├── GetDestinationUseCase.kt
+│       ├── GetLastLocationUseCase.kt
 │       ├── GetLastTrainNotificationUseCase.kt
 │       ├── GetStationListUseCase.kt
 │       ├── GetSubwayArrivalDataUseCase.kt
 │       ├── RegisterAlarmUseCase.kt
 │       ├── SaveStationListUseCase.kt
 │       ├── SetDestinationUseCase.kt
+│       ├── SetLastLocationUseCase.kt
 │       └── SetLastTrainNotificationUseCase.kt
 ├── infrastructure
 │   ├── AppCore.kt
 │   ├── BootReceiver.kt
+│   ├── JibroWorker.kt
 │   ├── LocationForegroundService.kt
-│   └── LocationHelper.kt
+│   ├── LocationHelper.kt
+│   └── di
+│       └── LocationModule.kt
 ├── presentation
+│   ├── .DS_Store
 │   ├── activity
 │   │   ├── LikeStationActivity.kt
 │   │   ├── MainActivity.kt
@@ -84,16 +105,8 @@ app/src/main/java/com/windrr/jibrro
 │   │   ├── AlarmPermissionModal.kt
 │   │   ├── BannerAdView.kt
 │   │   ├── DestinationBanner.kt
-│   │   └── LocationPermissionDialog.kt
-│   ├── di
-│   │   ├── DatabaseModule.kt
-│   │   ├── LocalDataModule.kt
-│   │   ├── LocationModule.kt
-│   │   ├── NetworkModule.kt
-│   │   ├── RemoteDataModule.kt
-│   │   ├── RepositoryModule.kt
-│   │   ├── StationModule.kt
-│   │   └── UseCaseModule.kt
+│   │   ├── LocationPermissionDialog.kt
+│   │   └── LocationPermissionPreviewModal.kt
 │   ├── ui
 │   │   └── theme
 │   │       ├── Color.kt
@@ -107,10 +120,13 @@ app/src/main/java/com/windrr/jibrro
 │   └── widget
 │       ├── ArrivalInfoWidget.kt
 │       ├── ArrivalInfoWidgetReceiver.kt
-│       └── action
-│           └── RefreshAction.kt
+│       ├── action
+│       │   └── RefreshAction.kt
+│       └── di
+│           └── WidgetEntryPoint.kt
 └── util
-    └── Action.kt
+    ├── Action.kt
+    └── DistanceUtil.kt
 ```
 </details>
 
@@ -249,7 +265,7 @@ app/src/main/java/com/windrr/jibrro
 
 **현재 위치 기반 역 조회**
 - LocationHelper를 사용해 사용자의 현재 위치를 가져옵니다.
-- StationAssetDataSource에서 역 목록을 로드하고, 가장 가까운 역을 찾습니다.
+- GetClosestStationUseCase 역 목록을 로드하고, 가장 가까운 역을 찾습니다.
 
 **도착 정보 조회**
 - GetSubwayArrivalDataUseCase를 사용해 선택된 역의 실시간 도착 정보를 가져온 뒤, LazyColumn으로 목록을 표시합니다.
