@@ -53,7 +53,6 @@ app/src/main/java/com/windrr/jibrro
 │       └── SubwayInfo.kt
 ├── di
 ├── domain
-│   ├── .DS_Store
 │   ├── di
 │   │   └── UseCaseModule.kt
 │   ├── repository
@@ -88,7 +87,6 @@ app/src/main/java/com/windrr/jibrro
 │   └── di
 │       └── LocationModule.kt
 ├── presentation
-│   ├── .DS_Store
 │   ├── activity
 │   │   ├── LikeStationActivity.kt
 │   │   ├── MainActivity.kt
