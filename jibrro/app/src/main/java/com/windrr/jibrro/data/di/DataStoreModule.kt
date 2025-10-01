@@ -3,8 +3,6 @@ package com.windrr.jibrro.data.di
 import android.content.Context
 import com.windrr.jibrro.data.repository.datasource.SettingsLocalDataSource
 import com.windrr.jibrro.data.repository.datasourceImpl.SettingsLocalDataSourceImpl
-import com.windrr.jibrro.data.repository.repositoryImpl.SettingsRepositoryImpl
-import com.windrr.jibrro.domain.repository.SettingsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
