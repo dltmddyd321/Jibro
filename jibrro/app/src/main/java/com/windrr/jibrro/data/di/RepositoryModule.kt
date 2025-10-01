@@ -17,33 +17,39 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 class RepositoryModule {
     @Provides
+    @Singleton
     fun provideSubwayRepositoryRepository(
         subwayArrivalRemoteDataSource: SubwayArrivalRemoteDataSource,
     ): SubwayRepository {
         return SubwayRepositoryImpl(subwayArrivalRemoteDataSource)
     }
     @Provides
+    @Singleton
     fun provideCheckStationRepository(
         subwayLocalDataSource: SubwayLocalDataSource
     ): CheckStationRepository {
         return CheckStationRepositoryImpl(subwayLocalDataSource)
     }
     @Provides
+    @Singleton
     fun provideAlarmRepository(
         alarmRepositoryImpl: AlarmRepositoryImpl
     ): AlarmRepository {
         return alarmRepositoryImpl
     }
     @Provides
+    @Singleton
     fun provideSettingsRepository(
         impl: SettingsRepositoryImpl
     ): SettingsRepository = impl
     @Provides
+    @Singleton
     fun provideSubwayStationRepository(
         dataSource: StationDataSource
     ): StationRepository {
