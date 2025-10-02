@@ -1,0 +1,38 @@
+{
+  "errorMessage": {
+    "code": "INFO-000",
+    "developerMessage": "정상 처리되었습니다.",
+    "link": "",
+    "message": "정상 처리되었습니다.",
+    "status": 200,
+    "total": 1
+  },
+  "realtimeArrivalList": [
+    {
+      "arvlCd": "99",
+      "arvlMsg2": "5분 후 (사당 도착)",
+      "arvlMsg3": "사당 도착",
+      "barvlDt": "300",
+      "bstatnId": "222",
+      "bstatnNm": "강남",
+      "btrainNo": "1234",
+      "btrainSttus": "0",
+      "lstcarAt": "0",
+      "ordkey": "02012강남1",
+      "recptnDt": "2025-01-01 12:00:00",
+      "rowNum": 0,
+      "selectedCount": 1,
+      "statnFid": "222-2221",
+      "statnId": "222",
+      "statnList": "222",
+      "statnNm": "강남",
+      "statnTid": "222-2223",
+      "subwayId": "1002",
+      "subwayList": "1002",
+      "totalCount": 1,
+      "trainLineNm": "2호선",
+      "trnsitCo": "1",
+      "updnLine": "상행"
+    }
+  ]
+}
