@@ -85,6 +85,8 @@ dependencies {
     testImplementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     testImplementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("io.mockk:mockk-agent-jvm:1.13.8")
     
     // AndroidX Test
     androidTestImplementation("androidx.test:runner:1.5.2")
