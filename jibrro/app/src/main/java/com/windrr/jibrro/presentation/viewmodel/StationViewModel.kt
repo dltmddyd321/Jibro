@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.domain.usecase.GetClosestStationUseCase
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
-import com.windrr.jibrro.util.distanceInMeters
+import com.windrr.jibrro.domain.usecase.StationSearchUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class StationViewModel @Inject constructor(
     private val getSubwayStationsUseCase: GetStationListUseCase,
-    private val getClosestStationUseCase: GetClosestStationUseCase
+    private val getClosestStationUseCase: GetClosestStationUseCase,
+    private val stationSearchUseCase: StationSearchUseCase
 ) : ViewModel() {
 
     private val _closestStation = MutableStateFlow<String?>(null)
@@ -29,18 +30,12 @@ class StationViewModel @Inject constructor(
     private val _stationList = MutableStateFlow<List<SubwayStation>>(emptyList())
     val stationList: StateFlow<List<SubwayStation>> = _stationList.asStateFlow()
 
-    private val _allStations = getSubwayStationsUseCase().filter { it.lat != 0.0 && it.lng != 0.0 }
-
     init {
-        _stationList.value = _allStations
+        _stationList.value = getSubwayStationsUseCase()
     }
 
     fun findStationByName(name: String) {
-        _stationList.value = if (name.isEmpty()) {
-            _allStations
-        } else {
-            _allStations.filter { it.name in name }
-        }
+        _stationList.value = stationSearchUseCase.searchByKeyword(name)
     }
 
     fun findClosestStation(lat: Double, lng: Double) {

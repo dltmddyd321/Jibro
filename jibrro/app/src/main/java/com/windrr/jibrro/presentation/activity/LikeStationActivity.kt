@@ -55,6 +55,7 @@ import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SettingsViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class LikeStationActivity : ComponentActivity() {
@@ -141,6 +142,13 @@ class LikeStationActivity : ComponentActivity() {
                             .padding(innerPadding)
                             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
                     ) {
+                        LaunchedEffect(searchQuery) {
+                            if (searchQuery.isNotEmpty()) {
+                                delay(200L)
+
+                                stationViewModel.findStationByName(searchQuery)
+                            }
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             OutlinedTextField(
                                 value = searchQuery,
@@ -155,12 +163,12 @@ class LikeStationActivity : ComponentActivity() {
                                 ),
                                 keyboardActions = KeyboardActions(
                                     onSearch = {
-                                        // 검색 버튼 누르면 실행
                                         stationViewModel.findStationByName(searchQuery)
                                         focusManager.clearFocus()
                                     }))
                             Button(onClick = {
                                 stationViewModel.findStationByName(searchQuery)
+                                focusManager.clearFocus()
                             }) {
                                 Text("검색")
                             }
