@@ -1,9 +1,12 @@
 # Jibro
 인근 지하철역의 도착 정보를 확인하고 막차, 목적지 도착 알림을 받을 수 있는 서비스입니다.<br />
+<p align="left">
+  <a href="https://play.google.com/store/apps/details?id=com.windrr.jibrro">
+    <img src="./screen_shot/google_play.png" alt="Download on Google Play" width="200"/>
+  </a>
+</p>
 <br />
-Play Store : https://play.google.com/store/apps/details?id=com.windrr.jibrro&pli=1
-<br />
-<br />
+
 ## 프로젝트 구조
 <details>
 <summary>폴더 트리 보기</summary>
