@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "jibrro"
 include(":app")
+include(":ai-scaffolder")
