@@ -5,6 +5,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.windrr.jibrro.data.model.AlarmInfo
 import com.windrr.jibrro.domain.repository.AlarmRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,6 +17,7 @@ class AlarmRepositoryImpl @Inject constructor(
     @SuppressLint("ScheduleExactAlarm")
     override suspend fun registerAlarm(alarmInfo: AlarmInfo) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) return
         val intent = Intent(context, com.windrr.jibrro.presentation.alarm.AlarmReceiver::class.java).apply {
             putExtra("arrivalInfo", alarmInfo.arrivalInfo)
         }

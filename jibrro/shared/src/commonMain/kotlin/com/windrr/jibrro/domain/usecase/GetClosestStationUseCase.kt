@@ -3,9 +3,7 @@ package com.windrr.jibrro.domain.usecase
 import com.windrr.jibrro.data.model.SubwayStation
 import com.windrr.jibrro.domain.repository.StationRepository
 import com.windrr.jibrro.util.distanceInMeters
-import javax.inject.Inject
-
-class GetClosestStationUseCase @Inject constructor(
+class GetClosestStationUseCase(
     private val stationRepository: StationRepository
 ) {
     operator fun invoke(lat: Double, lng: Double): SubwayStation? {

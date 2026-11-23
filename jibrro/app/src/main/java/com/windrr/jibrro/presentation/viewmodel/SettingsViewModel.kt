@@ -11,9 +11,8 @@ import com.windrr.jibrro.domain.usecase.SetLastTrainNotificationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,35 +34,20 @@ class SettingsViewModel @Inject constructor(
         false
     )
 
-    private val _destination = MutableStateFlow<Destination?>(null)
-    val destination: StateFlow<Destination?> = _destination
+    val destination = getDestinationUseCase().stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    init {
-        refreshDestination()
+    suspend fun saveLastTrainEnabled(enabled: Boolean): Boolean = try {
+        setLastTrainNotificationUseCase(enabled)
+        true
+    } catch (_: IOException) {
+        false
     }
 
-    fun refreshDestination() {
-        viewModelScope.launch {
-            getDestinationUseCase().collect {
-                if (it != null) {
-                    _destination.value = it
-                } else {
-                    _destination.value = null
-                }
-            }
-        }
-    }
-
-    fun setLastTrainEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            setLastTrainNotificationUseCase(enabled)
-        }
-    }
-
-    fun setDestination(destination: Destination?) {
-        viewModelScope.launch {
-            setDestinationUseCase(destination)
-        }
+    suspend fun saveDestination(destination: Destination?): Boolean = try {
+        setDestinationUseCase(destination)
+        true
+    } catch (_: IOException) {
+        false
     }
 
     fun updateLocation(lat: Double, lng: Double) {

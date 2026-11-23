@@ -1,21 +1,21 @@
 package com.windrr.jibrro.infrastructure
 
 import android.content.Context
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.windrr.jibrro.data.commute.subwayArrival
 import com.windrr.jibrro.data.model.AlarmInfo
+import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
 import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.domain.usecase.RegisterAlarmUseCase
+import com.windrr.jibrro.util.distanceInMeters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
 
 @HiltWorker
 class JibroWorker @AssistedInject constructor(
@@ -25,47 +25,27 @@ class JibroWorker @AssistedInject constructor(
     private val getStationListUseCase: GetStationListUseCase,
     private val getSubwayArrivalDataUseCase: GetSubwayArrivalDataUseCase,
     private val registerAlarmUseCase: RegisterAlarmUseCase,
+    private val getLastTrainNotification: GetLastTrainNotificationUseCase
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
-        val location = locationHelper.getLastLocationSuspend()
-        if (location == null) {
-            Log.e("JibroWorker", "위치를 가져올 수 없습니다.")
-            return Result.failure()
+        if (!getLastTrainNotification().first()) return Result.success()
+        if (!applicationContext.alertPermissions(AlertFeature.LAST_TRAIN).ready) return Result.success()
+        val point = withTimeoutOrNull(15_000) { locationHelper.currentCoordinates() } ?: return Result.success()
+
+        val station = getStationListUseCase().asSequence()
+            .filter { it.lat != 0.0 && it.lng != 0.0 }
+            .minByOrNull { distanceInMeters(point.latitude, point.longitude, it.lat, it.lng) }
+            ?: return Result.success()
+        val arrivals = try {
+            getSubwayArrivalDataUseCase.execute(statnNm = station.name).data.orEmpty()
+        } catch (_: IOException) {
+            return Result.retry()
         }
 
-        val (lat, lng) = location
-
-        val stations = getStationListUseCase()
-        val closest = stations.minByOrNull {
-            distanceInMeters(lat, lng, it.lat, it.lng)
-        }
-
-        val stationName = closest?.name.orEmpty()
-        Log.d("JibroWorker", "가장 가까운 역: $stationName")
-
-        val arrivalDataList = getSubwayArrivalDataUseCase.execute(statnNm = stationName).data ?: emptyList()
-
-        val lastTrain = arrivalDataList.filter { it.lstcarAt == "1" }
-
-        if (lastTrain.isNotEmpty()) {
-            val trainInfo = lastTrain.first().trainLineNm
-            registerAlarmUseCase.invoke(AlarmInfo(System.currentTimeMillis(), trainInfo))
-        }
-
+        val now = System.currentTimeMillis()
+        val lastTrain = arrivals.firstOrNull { it.lstcarAt == "1" && subwayArrival(it, now) != null }
+            ?: return Result.success()
+        registerAlarmUseCase(AlarmInfo(now, "${station.name}역 · ${lastTrain.trainLineNm}"))
         return Result.success()
-    }
-
-    private fun distanceInMeters(
-        lat1: Double, lon1: Double,
-        lat2: Double, lon2: Double
-    ): Double {
-        val R = 6371000.0
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2).pow(2.0) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2.0)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
     }
 }

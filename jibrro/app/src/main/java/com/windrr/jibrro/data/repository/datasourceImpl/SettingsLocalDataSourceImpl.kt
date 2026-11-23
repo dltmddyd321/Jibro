@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.data.repository.datasource.SettingsLocalDataSource
+import com.windrr.jibrro.domain.commute.Coordinates
+import com.windrr.jibrro.domain.commute.HomeLocation
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -24,6 +26,25 @@ class SettingsLocalDataSourceImpl @Inject constructor(
     private val DEST_LNG = doublePreferencesKey("destination_lng")
     private val LAST_LAT = doublePreferencesKey("last_lat")
     private val LAST_LNG = doublePreferencesKey("last_lng")
+    private val homeLabel = stringPreferencesKey("home_label")
+    private val homeLatitude = doublePreferencesKey("home_latitude")
+    private val homeLongitude = doublePreferencesKey("home_longitude")
+
+    override val homeLocation: Flow<HomeLocation?> = context.dataStore.data.map { preferences ->
+        val label = preferences[homeLabel] ?: return@map null
+        val latitude = preferences[homeLatitude] ?: return@map null
+        val longitude = preferences[homeLongitude] ?: return@map null
+        val point = Coordinates(latitude, longitude)
+        HomeLocation(label, point).takeIf { point.isValid }
+    }
+
+    override suspend fun setHomeLocation(home: HomeLocation) {
+        context.dataStore.edit { preferences ->
+            preferences[homeLabel] = home.label
+            preferences[homeLatitude] = home.point.latitude
+            preferences[homeLongitude] = home.point.longitude
+        }
+    }
 
     override val lastTrainNotification: Flow<Boolean> =
         context.dataStore.data

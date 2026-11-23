@@ -1,7 +1,5 @@
 package com.windrr.jibrro.data.model
 
-import com.google.gson.annotations.SerializedName
-
 data class SubwayStation(
     val line: String,
     val name: String,
@@ -13,9 +11,4 @@ data class SubwayStation(
     val bldn_id: String,
     val lat: Double,
     val lng: Double
-)
-
-data class StationListWrapper(
-    @SerializedName("DATA")
-    val data: List<SubwayStation>
 )
