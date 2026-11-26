@@ -7,6 +7,7 @@ import com.windrr.jibrro.domain.usecase.DeleteStationUseCase
 import com.windrr.jibrro.domain.usecase.GetCheckStationListUseCase
 import com.windrr.jibrro.domain.usecase.SaveStationListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -19,9 +20,11 @@ class CheckStationViewModel @Inject constructor(
 ) : ViewModel() {
     private val _checkStationList = MutableStateFlow<List<CheckStation>>(emptyList())
     val checkStationList = _checkStationList
+    private var stationUpdates: Job? = null
 
     fun fetchCheckedStationList() {
-        viewModelScope.launch {
+        if (stationUpdates?.isActive == true) return
+        stationUpdates = viewModelScope.launch {
             getCheckStationUseCase().collect { stations ->
                 _checkStationList.value = stations
             }

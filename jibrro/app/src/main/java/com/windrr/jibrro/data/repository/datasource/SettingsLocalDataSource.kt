@@ -1,6 +1,7 @@
 package com.windrr.jibrro.data.repository.datasource
 
 import com.windrr.jibrro.data.model.Destination
+import com.windrr.jibrro.domain.commute.HomeLocation
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsLocalDataSource {
@@ -9,6 +10,9 @@ interface SettingsLocalDataSource {
 
     val destination: Flow<Destination?>
     suspend fun setDestination(destination: Destination?)
+
+    val homeLocation: Flow<HomeLocation?>
+    suspend fun setHomeLocation(home: HomeLocation)
 
     val lastLat: Flow<Double?>
     suspend fun setLastLat(value: Double)

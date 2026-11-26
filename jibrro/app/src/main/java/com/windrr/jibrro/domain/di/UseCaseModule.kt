@@ -6,6 +6,7 @@ import com.windrr.jibrro.domain.repository.StationRepository
 import com.windrr.jibrro.domain.repository.SubwayRepository
 import com.windrr.jibrro.domain.usecase.DeleteStationUseCase
 import com.windrr.jibrro.domain.usecase.GetCheckStationListUseCase
+import com.windrr.jibrro.domain.usecase.GetClosestStationUseCase
 import com.windrr.jibrro.domain.usecase.GetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.domain.usecase.GetStationListUseCase
@@ -13,6 +14,7 @@ import com.windrr.jibrro.domain.usecase.GetSubwayArrivalDataUseCase
 import com.windrr.jibrro.domain.usecase.SaveStationListUseCase
 import com.windrr.jibrro.domain.usecase.SetDestinationUseCase
 import com.windrr.jibrro.domain.usecase.SetLastTrainNotificationUseCase
+import com.windrr.jibrro.domain.usecase.StationSearchUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,6 +24,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
+    @Provides
+    fun provideGetClosestStationUseCase(repository: StationRepository): GetClosestStationUseCase {
+        return GetClosestStationUseCase(repository)
+    }
+
+    @Provides
+    fun provideStationSearchUseCase(repository: StationRepository): StationSearchUseCase {
+        return StationSearchUseCase(repository)
+    }
+
     @Singleton
     @Provides
     fun provideGetSubwayArrivalUseCase(subwayRepository: SubwayRepository): GetSubwayArrivalDataUseCase {

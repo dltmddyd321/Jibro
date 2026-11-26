@@ -26,6 +26,7 @@ class AppCore : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        ensureAlertChannels()
         registerActivityLifecycleCallbacks(LifeCycleCallback())
         val request = PeriodicWorkRequestBuilder<JibroWorker>(
             15, TimeUnit.MINUTES
@@ -49,9 +50,10 @@ class AppCore : Application(), Configuration.Provider {
 
         private fun refreshAllArrivalWidgets(context: Context) {
             CoroutineScope(Dispatchers.IO).launch {
-                val manager = GlanceAppWidgetManager(context)
-                val ids = manager.getGlanceIds(ArrivalInfoWidget::class.java)
-                ids.forEach { ArrivalInfoWidget().update(context, it) }
+                val appContext = context.applicationContext
+                val widget = ArrivalInfoWidget()
+                val ids = GlanceAppWidgetManager(appContext).getGlanceIds(ArrivalInfoWidget::class.java)
+                ids.forEach { widget.refresh(appContext, it) }
             }
         }
 

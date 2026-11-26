@@ -1,4 +1,5 @@
-import java.io.FileInputStream
+import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
+import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 import java.util.Properties
 
 plugins {
@@ -7,13 +8,42 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
 }
 
-val properties = Properties().apply {
-    load(FileInputStream(rootProject.file("local.properties")))
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
 }
+fun apiKey(name: String): String = providers.environmentVariable(name).orNull?.trim()
+    ?: localProperties.getProperty(name).orEmpty().trim()
+
+val subwayApiKey = apiKey("SUBWAY_API_KEY")
+val hasSubwayApiKey = subwayApiKey.isNotBlank()
+val hasSharedFirebaseConfig = file("google-services.json").isFile
+val hasReleaseFirebaseConfig = hasSharedFirebaseConfig || file("src/release/google-services.json").isFile
+val hasDebugFirebaseConfig = hasSharedFirebaseConfig || file("src/debug/google-services.json").isFile
+
+if (hasDebugFirebaseConfig || hasReleaseFirebaseConfig) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+    extensions.configure<GoogleServicesPluginConfig> {
+        missingGoogleServicesStrategy = MissingGoogleServicesStrategy.IGNORE
+    }
+}
+
+val validateReleaseConfiguration by tasks.registering {
+    doLast {
+        check(hasSubwayApiKey) {
+            "Set SUBWAY_API_KEY in local.properties or the environment before building release."
+        }
+        check(hasReleaseFirebaseConfig) {
+            "Add app/google-services.json or app/src/release/google-services.json before building release."
+        }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(validateReleaseConfiguration)
+}
+
 configurations.all {
     resolutionStrategy {
         force(libs.kotlin.metadata.jvm)
@@ -32,7 +62,10 @@ android {
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "SUBWAY_API_KEY", properties["SUBWAY_API_KEY"] as String)
+        listOf("SUBWAY_API_KEY", "ODSAY_API_KEY", "SEOUL_BUS_API_KEY", "GYEONGGI_BUS_API_KEY").forEach { name ->
+            val escapedKey = apiKey(name).replace("\\", "\\\\").replace("\"", "\\\"")
+            buildConfigField("String", name, "\"$escapedKey\"")
+        }
     }
 
     buildTypes {
@@ -57,6 +90,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
     implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics")
@@ -77,7 +111,6 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.57")
     ksp("com.google.dagger:hilt-android-compiler:2.57")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation(libs.logging.interceptor)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

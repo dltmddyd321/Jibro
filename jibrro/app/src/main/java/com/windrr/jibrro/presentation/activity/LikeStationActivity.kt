@@ -1,7 +1,6 @@
 package com.windrr.jibrro.presentation.activity
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,9 +46,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.windrr.jibrro.data.model.CheckStation
-import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.data.model.SubwayStation
-import com.windrr.jibrro.presentation.activity.ui.theme.JibrroTheme
+import com.windrr.jibrro.presentation.ui.theme.JibrroTheme
 import com.windrr.jibrro.presentation.viewmodel.CheckStationViewModel
 import com.windrr.jibrro.presentation.viewmodel.SettingsViewModel
 import com.windrr.jibrro.presentation.viewmodel.StationViewModel
@@ -68,7 +65,14 @@ class LikeStationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val destinationMode = intent?.getStringExtra("startMode") == "destination"
+        if (intent.getStringExtra("startMode") == "destination") {
+            setContent {
+                val stations by stationViewModel.stationList.collectAsState()
+                val destination by settingsViewModel.destination.collectAsState()
+                DestinationAlertScreen(stations, destination, settingsViewModel::saveDestination, ::finish)
+            }
+            return
+        }
 
         setContent {
             JibrroTheme {
@@ -92,7 +96,7 @@ class LikeStationActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(), topBar = {
                         TopAppBar(title = {
                             Text(
-                                text = if (destinationMode) "목적지 지정" else "즐겨찾기",
+                                text = "즐겨찾기",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }, navigationIcon = {
@@ -179,22 +183,9 @@ class LikeStationActivity : ComponentActivity() {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                         } else {
-                            if (destinationMode) {
-                                Button(
-                                    onClick = {
-                                        settingsViewModel.setDestination(null)
-                                        finish()
-                                    }, modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 8.dp)
-                                ) {
-                                    Text(text = "목적지 초기화")
-                                }
-                            }
                             StationListScreen(
                                 checkedStates = checkedStates,
                                 stations = stationList,
-                                destinationMode = destinationMode,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
@@ -208,17 +199,8 @@ class LikeStationActivity : ComponentActivity() {
     fun StationListScreen(
         checkedStates: MutableMap<String, Boolean>,
         stations: List<SubwayStation>,
-        destinationMode: Boolean,
         modifier: Modifier = Modifier
     ) {
-        val destination by settingsViewModel.destination.collectAsState()
-        var selectedDestination by remember { mutableStateOf(destination) }
-
-        LaunchedEffect(destination) {
-            Log.i("목적지 검사", destination?.name ?: "")
-            selectedDestination = destination
-        }
-
         val combinedLinesByName = remember(stations) {
             stations.groupBy { it.name }.mapValues { (_, list) ->
                     list.map { it.line }.flatMap { it.split('/').map(String::trim) }.distinct()
@@ -235,27 +217,12 @@ class LikeStationActivity : ComponentActivity() {
                 val stationId = station.bldn_id
                 val displayLine = combinedLinesByName[station.name] ?: station.line
 
-                if (destinationMode) {
-                    val isSelected = stationId == selectedDestination?.id
-                    StationListItem(
-                        name = station.name,
-                        line = displayLine,
-                        checked = isSelected,
-                        destinationMode = true,
-                        onCheckedChange = {
-                            selectedDestination =
-                                Destination(station.bldn_id, station.name, station.lat, station.lng)
-                            selectedDestination?.let { settingsViewModel.setDestination(it) }
-                        })
-                } else {
-                    val isChecked = checkedStates[stationId] ?: false
-                    StationListItem(
-                        name = station.name,
-                        line = displayLine,
-                        checked = isChecked,
-                        destinationMode = false,
-                        onCheckedChange = { checkedStates[stationId] = it })
-                }
+                StationListItem(
+                    name = station.name,
+                    line = displayLine,
+                    checked = checkedStates[stationId] == true,
+                    onCheckedChange = { checkedStates[stationId] = it }
+                )
             }
         }
     }
@@ -265,7 +232,6 @@ class LikeStationActivity : ComponentActivity() {
         name: String,
         line: String,
         checked: Boolean,
-        destinationMode: Boolean,
         onCheckedChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier
     ) {
@@ -288,14 +254,7 @@ class LikeStationActivity : ComponentActivity() {
                 )
             }
 
-            if (destinationMode) {
-                RadioButton(
-                    selected = checked, onClick = { onCheckedChange(true) })
-            } else {
-                Checkbox(
-                    checked = checked, onCheckedChange = onCheckedChange
-                )
-            }
+            Checkbox(checked = checked, onCheckedChange = onCheckedChange)
         }
     }
 }
