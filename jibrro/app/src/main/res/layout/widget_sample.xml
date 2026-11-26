@@ -1,46 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"
+    android:background="@drawable/widget_panel"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="8dp">
 
-    <!-- (선택) 헤더 -->
-    <TextView
-        android:id="@+id/widget_title"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/jibro_train_cat" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:text="@string/widget_title"
+            android:textColor="@color/widget_text"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="8dp"
-        android:text="My List"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_card"
+        android:orientation="vertical"
+        android:padding="8dp">
 
-    <!-- 리스트/빈뷰 컨테이너 -->
-    <FrameLayout
-        android:id="@+id/list_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <!-- 컬렉션 뷰: setRemoteAdapter() 대상 -->
-        <ListView
-            android:id="@+id/widget_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:cacheColorHint="@android:color/transparent"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="8dp" />
-
-        <!-- 빈 상태 표시: setEmptyView() 대상 -->
         <TextView
-            android:id="@+id/empty_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="항목이 없습니다"
-            android:textSize="14sp"
-            android:visibility="gone" />
-    </FrameLayout>
+            android:layout_height="wrap_content"
+            android:text="@string/widget_loading"
+            android:textColor="@color/widget_subtle"
+            android:textSize="11sp" />
 
+        <TextView
+            android:layout_width="110dp"
+            android:layout_height="8dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/widget_chip_background" />
+    </LinearLayout>
 </LinearLayout>

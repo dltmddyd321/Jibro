@@ -67,14 +67,15 @@ class LocationForegroundService : Service() {
                         if (destination == null) {
                             stopSelf()
                         } else {
-                            var previousThreshold: Int? = null
+                            val tracker = DestinationApproach()
                             locationHelper.preciseLocationUpdates().collect { point ->
                                 val distance = distanceInMeters(
                                     point.latitude, point.longitude, destination.latitude, destination.longitude
                                 )
-                                nextDestinationAlertThreshold(distance, previousThreshold)?.let { threshold ->
-                                    previousThreshold = threshold
-                                    showDistanceNotification(destination.name, threshold)
+                                tracker.update(distance)?.let { threshold ->
+                                    if (alertPermissions(AlertFeature.DESTINATION).notifications) {
+                                        showDistanceNotification(destination.name, threshold)
+                                    }
                                 }
                             }
                         }
@@ -86,7 +87,7 @@ class LocationForegroundService : Service() {
                 }
             }
         }
-        return START_NOT_STICKY
+        return if (intent?.action == ACTION_STOP_SERVICE) START_NOT_STICKY else START_STICKY
     }
 
     private fun createChannels() {
@@ -94,9 +95,7 @@ class LocationForegroundService : Service() {
         notifications.createNotificationChannel(NotificationChannel(
             TRACKING_CHANNEL, "목적지 위치 확인", NotificationManager.IMPORTANCE_LOW
         ))
-        notifications.createNotificationChannel(NotificationChannel(
-            AlertFeature.DESTINATION.channelId, "목적지 알림", NotificationManager.IMPORTANCE_HIGH
-        ))
+        ensureAlertChannels()
     }
 
     private fun trackingNotification(message: String = "선택한 역과의 거리를 확인하고 있어요."): Notification =
@@ -117,6 +116,8 @@ class LocationForegroundService : Service() {
             .setContentText("${name}까지 ${distance} 이내예요.")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
             .setContentIntent(openApp())
             .addAction(0, "알림 끄기", stopAlert())
             .setAutoCancel(true)
@@ -148,13 +149,18 @@ class LocationForegroundService : Service() {
     }
 }
 
-internal fun nextDestinationAlertThreshold(distanceMeters: Double, previousThreshold: Int?): Int? {
-    if (!distanceMeters.isFinite() || distanceMeters < 0) return null
-    val threshold = when {
-        distanceMeters <= 500 -> 500
-        distanceMeters <= 1_000 -> 1_000
-        distanceMeters <= 2_000 -> 2_000
-        else -> return null
+internal class DestinationApproach {
+    private val thresholds = listOf(500, 1_000, 2_000)
+    private val notified = mutableSetOf<Int>()
+
+    fun update(distanceMeters: Double): Int? {
+        if (!distanceMeters.isFinite() || distanceMeters < 0) return null
+        // Require a wider exit boundary to avoid re-alerting from GPS jitter.
+        notified.removeAll { distanceMeters > it + 100 }
+        val threshold = thresholds.firstOrNull { distanceMeters <= it } ?: return null
+        if (threshold in notified) return null
+        // A jump into a closer band counts as entering all of the skipped bands.
+        notified.addAll(thresholds.filter { it >= threshold })
+        return threshold
     }
-    return threshold.takeIf { previousThreshold == null || it < previousThreshold }
 }

@@ -3,15 +3,14 @@ package com.windrr.jibrro.presentation.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.windrr.jibrro.R
 import com.windrr.jibrro.domain.usecase.GetLastTrainNotificationUseCase
 import com.windrr.jibrro.infrastructure.AlertFeature
 import com.windrr.jibrro.infrastructure.alertPermissions
+import com.windrr.jibrro.infrastructure.ensureAlertChannels
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -48,11 +47,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel(channelId, AlertFeature.LAST_TRAIN.title, NotificationManager.IMPORTANCE_HIGH)
-            notificationManager.createNotificationChannel(channel)
-        }
+        context.ensureAlertChannels()
 
         val launchIntent = Intent(
             context,
@@ -68,6 +63,10 @@ class AlarmReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, channelId)
             .setContentTitle(title)
             .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

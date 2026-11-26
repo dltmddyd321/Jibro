@@ -76,7 +76,7 @@ fun LocationPermissionDialog(onClick: () -> Unit) {
                 Button(
                     onClick = onClick,
                     shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)), // 파란색
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)

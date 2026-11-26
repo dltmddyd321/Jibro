@@ -1,5 +1,11 @@
 package com.windrr.jibrro.presentation.commute
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.text.style.TextOverflow
+import com.windrr.jibrro.presentation.ui.theme.JibroDisplay
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -48,9 +53,12 @@ import com.windrr.jibrro.domain.commute.CommuteRoute
 import com.windrr.jibrro.domain.commute.Coordinates
 import com.windrr.jibrro.domain.commute.HomeLocation
 import com.windrr.jibrro.domain.commute.TransitMode
+import com.windrr.jibrro.presentation.component.PlatformEdge
+import com.windrr.jibrro.presentation.ui.theme.Signage
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
-fun LazyListScope.homeRouteItems(
+internal fun LazyListScope.homeRouteItems(
     home: HomeLocation?,
     hasPermission: Boolean,
     origin: Coordinates?,
@@ -59,16 +67,21 @@ fun LazyListScope.homeRouteItems(
     state: CommuteUiState,
     onEditHome: () -> Unit,
     onRequestLocation: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onArrivalDetails: ((ArrivalDetails) -> Unit)? = null
 ) {
     item(key = "commute-home") {
         HomeHero(home, hasPermission, origin, nearestStation, locating, onEditHome, onRequestLocation, onRefresh)
     }
-    if (home == null || !hasPermission || origin == null) return
+    if (home == null || !hasPermission) return
+    if (origin == null) {
+        if (locating) item(key = "commute-status") { TransitLoadingCard(TransitLoadingContent.LOCATION) }
+        return
+    }
 
     when (state) {
         CommuteUiState.Waiting, CommuteUiState.Loading -> item(key = "commute-status") {
-            RouteMessage("집으로 가는 경로를 찾는 중이에요.", loading = true)
+            TransitLoadingCard(TransitLoadingContent.ROUTES)
         }
         CommuteUiState.MissingKey -> item(key = "commute-status") {
             RouteMessage("경로 서비스를 설정하면 추천 경로를 볼 수 있어요.")
@@ -103,9 +116,11 @@ fun LazyListScope.homeRouteItems(
                 val arrival = state.arrivals[route]
                 RouteCard(
                     route,
-                    isFastest = index == 0 && !state.loadingArrivals && arrival?.serviceEnded != true,
+                    isFastest = index == 0 && (!state.loadingArrivals || state.arrivals.isNotEmpty()) &&
+                        arrival?.serviceEnded != true,
                     arrival = arrival,
-                    loadingArrival = state.loadingArrivals
+                    loadingArrival = state.loadingArrivals && arrival == null,
+                    onArrivalDetails = onArrivalDetails
                 )
             }
             item(key = "commute-attribution") {
@@ -132,76 +147,116 @@ private fun HomeHero(
     onRequestLocation: () -> Unit,
     onRefresh: () -> Unit
 ) {
-    val mint = Color(0xFFB7F0D8)
+    val accent = Signage.SoftSky
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color(0xFF164D3E),
-        contentColor = Color(0xFFFFFAE8)
+        shape = RoundedCornerShape(20.dp),
+        color = Signage.Navy,
+        contentColor = Signage.Paper
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(start = 19.dp, end = 14.dp, top = 13.dp, bottom = 11.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("집으로", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                    if (home == null) {
-                        Text("집을 설정하면 귀가 교통편을\n한눈에 볼 수 있어요.", style = MaterialTheme.typography.bodyMedium)
+        Box(Modifier.fillMaxWidth().heightIn(min = 172.dp)) {
+            Column(Modifier.matchParentSize()) {
+                Spacer(Modifier.weight(1f))
+                PlatformEdge()
+            }
+            // The train rolls in on the right and stops on the platform edge.
+            Image(
+                painter = painterResource(R.drawable.jibro_train_cat),
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.BottomEnd)
+                    .padding(end = 8.dp, bottom = 9.dp)
+                    .height(140.dp)
+            )
+            Column(
+                Modifier.fillMaxWidth()
+                    .padding(start = 19.dp, end = 158.dp, top = 14.dp, bottom = 22.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    "HOME BOUND",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = JibroDisplay,
+                    fontWeight = FontWeight.Bold,
+                    color = Signage.SafetyYellow,
+                    letterSpacing = 1.5.sp
+                )
+                Text("집으로", style = MaterialTheme.typography.headlineLarge, fontFamily = JibroDisplay, fontWeight = FontWeight.Bold)
+                if (home == null) {
+                    Text("집을 설정하면 귀가 교통편을 한눈에 볼 수 있어요.", style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Text(
+                        home.label,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (nearestStation != null && hasPermission && !locating && origin != null) {
+                        StationNameplate(nearestStation)
                     } else {
-                        Text(home.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (nearestStation != null && hasPermission && !locating) {
-                                TransitIcon(TransitMode.SUBWAY, mint, Modifier.size(14.dp))
-                            }
-                            Text(
-                                when {
-                                    !hasPermission -> "현재 위치 권한이 필요해요."
-                                    locating -> "현재 위치 확인 중"
-                                    origin == null -> "현재 위치를 확인할 수 없어요."
-                                    nearestStation != null -> "가까운 역 · ${nearestStation}역"
-                                    else -> "현재 위치에서 출발"
-                                },
-                                style = MaterialTheme.typography.labelLarge,
-                                color = mint
-                            )
-                        }
+                        Text(
+                            when {
+                                !hasPermission -> "현재 위치 권한이 필요해요."
+                                locating -> "현재 위치 확인 중"
+                                origin == null -> "현재 위치를 확인할 수 없어요."
+                                else -> "현재 위치에서 출발"
+                            },
+                            style = MaterialTheme.typography.labelLarge,
+                            color = accent
+                        )
                     }
                 }
-                Image(
-                    painter = painterResource(R.drawable.jibro_train_cat),
-                    contentDescription = null,
-                    modifier = Modifier.weight(0.58f).heightIn(max = 130.dp).padding(start = 3.dp)
-                )
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val buttonColors = ButtonDefaults.buttonColors(containerColor = mint, contentColor = Color(0xFF133E32))
-                val textColors = ButtonDefaults.textButtonColors(contentColor = mint)
-                if (home == null) {
-                    Button(onClick = onEditHome, colors = buttonColors) { Text("집 설정") }
-                    if (!hasPermission) {
-                        TextButton(onClick = onRequestLocation, colors = textColors) { Text("위치 권한 허용") }
+                FlowRow(
+                    Modifier.padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val buttonColors = ButtonDefaults.buttonColors(
+                        containerColor = Signage.SafetyYellow,
+                        contentColor = Signage.OnSafetyYellow
+                    )
+                    val textColors = ButtonDefaults.textButtonColors(contentColor = accent)
+                    val compact = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                    if (home == null) {
+                        Button(onClick = onEditHome, colors = buttonColors, contentPadding = compact) { Text("집 설정", fontWeight = FontWeight.Bold) }
+                        if (!hasPermission) {
+                            TextButton(onClick = onRequestLocation, colors = textColors, contentPadding = compact) { Text("위치 권한 허용") }
+                        }
+                    } else {
+                        if (!hasPermission) {
+                            Button(onClick = onRequestLocation, colors = buttonColors, contentPadding = compact) { Text("위치 권한 허용", fontWeight = FontWeight.Bold) }
+                        } else if (origin == null && !locating) {
+                            Button(onClick = onRefresh, colors = buttonColors, contentPadding = compact) { Text("위치 다시 확인", fontWeight = FontWeight.Bold) }
+                        }
+                        TextButton(onClick = onEditHome, colors = textColors, contentPadding = compact) { Text("집 변경") }
                     }
-                } else {
-                    if (!hasPermission) {
-                        Button(onClick = onRequestLocation, colors = buttonColors) { Text("위치 권한 허용") }
-                    } else if (origin == null && !locating) {
-                        Button(onClick = onRefresh, colors = buttonColors) { Text("위치 다시 확인") }
-                    }
-                    TextButton(onClick = onEditHome, colors = textColors) { Text("집 변경") }
                 }
             }
         }
     }
 }
 
+/** White station nameplate, like the sign hanging over a platform. */
 @Composable
-private fun RouteMessage(text: String, onRetry: (() -> Unit)? = null, loading: Boolean = false) {
+private fun StationNameplate(station: String) {
+    Surface(shape = RoundedCornerShape(8.dp), color = Signage.Paper, contentColor = Signage.NavyDeep) {
+        Row(
+            Modifier.padding(start = 6.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Surface(shape = RoundedCornerShape(5.dp), color = Signage.Navy) {
+                TransitIcon(TransitMode.SUBWAY, Signage.Paper, Modifier.padding(3.dp).size(13.dp))
+            }
+            Text("가까운 역", style = MaterialTheme.typography.labelSmall, color = Signage.Navy.copy(alpha = 0.7f))
+            Text("${station}역", style = MaterialTheme.typography.labelLarge, fontFamily = JibroDisplay, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun RouteMessage(text: String, onRetry: (() -> Unit)? = null) {
     Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             Text(text)
             if (onRetry != null) TextButton(onClick = onRetry) { Text("다시 조회") }
         }
@@ -209,7 +264,13 @@ private fun RouteMessage(text: String, onRetry: (() -> Unit)? = null, loading: B
 }
 
 @Composable
-private fun RouteCard(route: CommuteRoute, isFastest: Boolean, arrival: BoardingArrival?, loadingArrival: Boolean) {
+private fun RouteCard(
+    route: CommuteRoute,
+    isFastest: Boolean,
+    arrival: BoardingArrival?,
+    loadingArrival: Boolean,
+    onArrivalDetails: ((ArrivalDetails) -> Unit)?
+) {
     val firstRide = route.firstRide ?: return
     val colors = MaterialTheme.colorScheme
     val modes = route.rides.map { it.mode }.distinct().joinToString(" + ") { it.label }
@@ -228,7 +289,16 @@ private fun RouteCard(route: CommuteRoute, isFastest: Boolean, arrival: Boarding
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    if (isFastest) Text("가장 빠른 경로", style = MaterialTheme.typography.labelLarge, color = colors.primary)
+                    if (isFastest) {
+                        Surface(shape = RoundedCornerShape(5.dp), color = Signage.SafetyYellow, contentColor = Signage.OnSafetyYellow) {
+                            Text(
+                                "가장 빠른 경로",
+                                Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     Text("${modes} · ${transfers}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 Surface(
@@ -240,6 +310,7 @@ private fun RouteCard(route: CommuteRoute, isFastest: Boolean, arrival: Boarding
                         "약 ${route.minutes}분",
                         Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.titleMedium,
+                        fontFamily = JibroDisplay,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -252,7 +323,22 @@ private fun RouteCard(route: CommuteRoute, isFastest: Boolean, arrival: Boarding
                     val direction = arrival?.line?.let { line ->
                         if (firstRide.mode == TransitMode.SUBWAY) "같은 방면 · $line" else line
                     }
-                    ArrivalDisplay(arrival, loadingArrival, hint = direction)
+                    ArrivalDisplay(
+                        arrival, loadingArrival, hint = direction,
+                        onDetails = onArrivalDetails?.let { open ->
+                            arrival?.let { prediction ->
+                                {
+                                    open(ArrivalDetails.from(
+                                        prediction, firstRide.mode, firstRide.start,
+                                        line = if (firstRide.mode == TransitMode.BUS) prediction.line ?: firstLine else firstLine,
+                                        destination = prediction.line.takeIf { firstRide.mode == TransitMode.SUBWAY },
+                                        direction = firstRide.direction,
+                                        alightingStop = firstRide.end
+                                    ))
+                                }
+                            }
+                        }
+                    )
                     if (arrival?.seconds?.let { it < route.approachMinutes * 60 } == true) {
                         Text(
                             "탑승지에 도착하기 전에 출발할 수 있어요.",
@@ -261,12 +347,20 @@ private fun RouteCard(route: CommuteRoute, isFastest: Boolean, arrival: Boarding
                         )
                     }
                 }
+                fun lineOf(ride: com.windrr.jibrro.domain.commute.CommuteLeg) =
+                    ride.lines.joinToString(" / ") { it.name }.ifBlank { ride.mode.label }
                 route.rides.zipWithNext().forEach { (previous, next) ->
                     val station = if (previous.end == next.start) next.start else "${previous.end} → ${next.start}"
-                    val line = next.lines.joinToString(" / ") { it.name }.ifBlank { next.mode.label }
-                    TransitStop("환승", station, line, next.mode, hasPrevious = true, hasNext = true)
+                    TransitStop(
+                        "환승", station, lineOf(next), next.mode, hasPrevious = true, hasNext = true,
+                        incomingColor = rideColor(previous.mode, lineOf(previous))
+                    )
                 }
-                TransitStop("하차", route.rides.last().end, null, null, hasPrevious = true, hasNext = false)
+                val lastRide = route.rides.last()
+                TransitStop(
+                    "하차", lastRide.end, null, null, hasPrevious = true, hasNext = false,
+                    incomingColor = rideColor(lastRide.mode, lineOf(lastRide))
+                )
             }
         }
     }
@@ -323,7 +417,7 @@ fun HomeLocationPicker(
                         ) { Text("현재 위치 선택") }
                     }
                 }
-                if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                if (state.loading) TransitLoadingCard(TransitLoadingContent.HOME_SEARCH)
                 state.message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 if (state.entries.isNotEmpty()) {
                     LazyColumn(Modifier.heightIn(max = 200.dp)) {

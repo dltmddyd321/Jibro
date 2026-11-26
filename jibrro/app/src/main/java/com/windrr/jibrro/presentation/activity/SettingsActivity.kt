@@ -43,6 +43,7 @@ import androidx.core.net.toUri
 import com.windrr.jibrro.BuildConfig
 import com.windrr.jibrro.domain.commute.TransitMode
 import com.windrr.jibrro.infrastructure.AlertFeature
+import com.windrr.jibrro.infrastructure.enqueueLastTrainCheck
 import com.windrr.jibrro.presentation.commute.TransitIcon
 import com.windrr.jibrro.presentation.component.AlarmPermissionModal
 import com.windrr.jibrro.presentation.component.FeatureHeader
@@ -82,6 +83,7 @@ class SettingsActivity : ComponentActivity() {
             scope.launch {
                 try {
                     failed = !settingsViewModel.saveLastTrainEnabled(value)
+                    if (!failed && value) enqueueLastTrainCheck(this@SettingsActivity)
                 } finally {
                     saving = false
                 }

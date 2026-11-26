@@ -1,5 +1,9 @@
 package com.windrr.jibrro.presentation.activity
 
+import androidx.compose.foundation.shape.CircleShape
+import com.windrr.jibrro.presentation.commute.rideColor
+import com.windrr.jibrro.presentation.component.LineBadge
+import com.windrr.jibrro.presentation.ui.theme.JibroDisplay
 import SubwayLineMap
 import android.Manifest
 import android.content.Intent
@@ -33,7 +37,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,15 +76,19 @@ import com.windrr.jibrro.data.model.Destination
 import com.windrr.jibrro.domain.commute.BoardingArrival
 import com.windrr.jibrro.domain.commute.TransitMode
 import com.windrr.jibrro.domain.state.Result
+import com.windrr.jibrro.presentation.commute.ArrivalDetails
 import com.windrr.jibrro.presentation.commute.ArrivalDisplay
 import com.windrr.jibrro.presentation.commute.DirectionBadge
 import com.windrr.jibrro.presentation.commute.TransitIcon
+import com.windrr.jibrro.presentation.commute.TransitLoadingCard
+import com.windrr.jibrro.presentation.commute.TransitLoadingContent
 import com.windrr.jibrro.presentation.commute.homeRouteItems
 import com.windrr.jibrro.infrastructure.LocationForegroundService
 import com.windrr.jibrro.infrastructure.AlertFeature
 import com.windrr.jibrro.infrastructure.alertPermissions
 import com.windrr.jibrro.presentation.component.BannerAdView
 import com.windrr.jibrro.presentation.component.DestinationBanner
+import com.windrr.jibrro.presentation.component.ImportantAlertPermissionOverlay
 import com.windrr.jibrro.presentation.component.JibrroDrawer
 import com.windrr.jibrro.presentation.component.JibrroPermissionDialog
 import com.windrr.jibrro.presentation.component.PermissionAction
@@ -164,7 +171,7 @@ class MainActivity : ComponentActivity() {
                 val refresh: () -> Unit = {
                     locationGranted = hasLocation()
                     homeRouteViewModel.updateOrigin(locationGranted, manual = true)
-                    subwayArrivalViewModel.refreshStations(sections)
+                    subwayArrivalViewModel.refreshStations(sections, closest)
                 }
 
                 DisposableEffect(lifecycle) {
@@ -195,16 +202,18 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(origin) {
                     origin?.let { stationViewModel.findClosestStation(it.latitude, it.longitude) }
                 }
-                LaunchedEffect(lifecycle, sections) {
+                LaunchedEffect(lifecycle, sections, closest) {
                     if (sections.isNotEmpty()) {
                         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                             while (true) {
-                                subwayArrivalViewModel.refreshStations(sections)
+                                subwayArrivalViewModel.refreshStations(sections, closest)
                                 delay(45_000)
                             }
                         }
                     }
                 }
+
+                ImportantAlertPermissionOverlay()
 
                 if (showLocationGuide && !locationGranted) {
                     val openSettings = requestedLocation && !shouldShowRequestPermissionRationale(
@@ -246,7 +255,8 @@ class MainActivity : ComponentActivity() {
                             home, locationGranted, origin, closest, locating, routes,
                             onEditHome = { showHomePicker = true },
                             onRequestLocation = { showLocationGuide = true },
-                            onRefresh = refresh
+                            onRefresh = refresh,
+                            onArrivalDetails = { startActivity(it.intent(this@MainActivity)) }
                         )
                         sections.forEach { name ->
                             item(key = "station:$name") {
@@ -255,12 +265,12 @@ class MainActivity : ComponentActivity() {
                                         if (name == closest) "가까운 지하철역" else "즐겨찾기",
                                         style = MaterialTheme.typography.labelLarge
                                     )
-                                    Text(name, style = MaterialTheme.typography.titleLarge)
+                                    Text("${name}역", style = MaterialTheme.typography.titleLarge, fontFamily = JibroDisplay, fontWeight = FontWeight.Bold)
                                 }
                             }
                             when (val state = arrivalMap[name]) {
-                                null, is Result.Loading -> item {
-                                    CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                                null, is Result.Loading -> item(key = "station-loading:$name") {
+                                    TransitLoadingCard(TransitLoadingContent.STATION)
                                 }
                                 is Result.Error -> item {
                                     Text(
@@ -279,7 +289,8 @@ class MainActivity : ComponentActivity() {
                                             arrival = arrival,
                                             trainLineNm = row.trainLineNm,
                                             lstcarAt = row.lstcarAt,
-                                            subwayId = row.subwayId
+                                            subwayId = row.subwayId,
+                                            station = name
                                         )
                                     }
                                 }
@@ -362,7 +373,8 @@ class MainActivity : ComponentActivity() {
                             Text(
                                 "Jibro",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
+                                fontFamily = JibroDisplay,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         },
@@ -412,8 +424,10 @@ class MainActivity : ComponentActivity() {
         subwayId: String,
         arrival: BoardingArrival,
         trainLineNm: String,
-        lstcarAt: String
+        lstcarAt: String,
+        station: String
     ) {
+        val line = SubwayLineMap.getNameById(subwayId).ifBlank { "지하철" }
         val colors = MaterialTheme.colorScheme
         Surface(shape = RoundedCornerShape(17.dp), color = colors.surface) {
             Column(
@@ -425,18 +439,16 @@ class MainActivity : ComponentActivity() {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
+                    val lineColor = rideColor(TransitMode.SUBWAY, line)
                     Box(
-                        Modifier.size(32.dp).background(colors.primaryContainer, RoundedCornerShape(9.dp)),
+                        Modifier.size(32.dp).background(lineColor, CircleShape).padding(4.dp)
+                            .background(colors.surface, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        TransitIcon(TransitMode.SUBWAY, colors.onPrimaryContainer, Modifier.size(19.dp))
+                        TransitIcon(TransitMode.SUBWAY, lineColor, Modifier.size(15.dp))
                     }
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            SubwayLineMap.getNameById(subwayId).ifBlank { "지하철" },
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Box(Modifier.weight(1f)) {
+                        LineBadge(line, lineColor)
                     }
                     DirectionBadge(arrival.direction)
                     if (lstcarAt == "1") {
@@ -449,22 +461,15 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                ArrivalDisplay(arrival, hint = trainLineNm)
+                ArrivalDisplay(arrival, hint = trainLineNm, onDetails = {
+                    startActivity(ArrivalDetails.from(
+                        arrival, TransitMode.SUBWAY, station, line,
+                        destination = trainLineNm,
+                        lastTrain = lstcarAt == "1"
+                    ).intent(this@MainActivity))
+                })
             }
         }
     }
 
-}
-
-fun formatArrivalMessage(raw: String): String {
-    var result = raw
-
-    val bracketPattern = Regex("""\[(\d+)]""")
-    result = result.replace(bracketPattern) { it.groupValues[1] }
-
-    if (result.trim().endsWith("후")) {
-        result += " 도착 예정"
-    }
-
-    return result
 }

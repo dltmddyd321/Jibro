@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission
@@ -51,6 +52,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".presentation.activity.ArrivalDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Jibrro" />
+        <activity
             android:name=".presentation.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Jibrro" />
@@ -75,7 +80,7 @@
         <receiver
             android:name=".presentation.widget.ArrivalInfoWidgetReceiver"
             android:exported="true"
-            android:label="도착 정보">
+            android:label="@string/widget_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

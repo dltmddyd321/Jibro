@@ -1,7 +1,9 @@
 package com.windrr.jibrro.presentation.commute
 
+import com.windrr.jibrro.presentation.ui.theme.JibroDisplay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,10 +27,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.windrr.jibrro.domain.commute.BoardingArrival
 import com.windrr.jibrro.domain.commute.TransitMode
+import com.windrr.jibrro.presentation.component.LineBadge
+import com.windrr.jibrro.presentation.ui.theme.Signage
+import com.windrr.jibrro.presentation.ui.theme.subwayLineColor
 
 private val trainPixels = listOf(
     "..#####..",
@@ -84,6 +94,17 @@ internal fun TransitIcon(mode: TransitMode?, tint: Color, modifier: Modifier = M
     }
 }
 
+/** Color used for a ride on the route map: official line color for subways, bus blue for buses. */
+@Composable
+internal fun rideColor(mode: TransitMode?, line: String?): Color {
+    val colors = MaterialTheme.colorScheme
+    return when (mode) {
+        TransitMode.SUBWAY -> subwayLineColor(line) ?: colors.primary
+        TransitMode.BUS -> Signage.Bus
+        null -> colors.outline
+    }
+}
+
 @Composable
 internal fun TransitStop(
     label: String,
@@ -92,47 +113,44 @@ internal fun TransitStop(
     mode: TransitMode?,
     hasPrevious: Boolean,
     hasNext: Boolean,
+    incomingColor: Color? = null,
     content: @Composable () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
-    val marker = when (mode) {
-        TransitMode.SUBWAY -> colors.primaryContainer to colors.onPrimaryContainer
-        TransitMode.BUS -> colors.tertiaryContainer to colors.onTertiaryContainer
-        null -> colors.secondaryContainer to colors.onSecondaryContainer
-    }
+    val lineColor = rideColor(mode, line)
+    val upper = incomingColor ?: colors.outlineVariant
+    val ring = if (mode == null) upper else lineColor
     Row(
         modifier = Modifier.fillMaxWidth().drawBehind {
             val centerX = 16.dp.toPx()
             val centerY = 19.dp.toPx()
-            if (hasPrevious || hasNext) {
-                drawLine(
-                    color = colors.outlineVariant,
-                    start = Offset(centerX, if (hasPrevious) 0f else centerY),
-                    end = Offset(centerX, if (hasNext) size.height else centerY),
-                    strokeWidth = 2.dp.toPx()
-                )
+            val stroke = 5.dp.toPx()
+            if (hasPrevious) {
+                drawLine(upper, Offset(centerX, 0f), Offset(centerX, centerY), stroke)
+            }
+            if (hasNext) {
+                drawLine(lineColor, Offset(centerX, centerY), Offset(centerX, size.height), stroke)
             }
         },
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Subway-map style station marker: white disc with a thick line-colored ring.
         Box(
             modifier = Modifier.padding(top = 3.dp).size(32.dp)
-                .background(marker.first, RoundedCornerShape(9.dp)),
+                .background(ring, CircleShape)
+                .padding(4.dp)
+                .background(colors.surface, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            TransitIcon(mode, marker.second, Modifier.size(19.dp))
+            TransitIcon(mode, ring, Modifier.size(15.dp))
         }
         Column(
             modifier = Modifier.weight(1f).padding(bottom = if (hasNext) 15.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
-            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            if (line != null) {
-                Surface(shape = RoundedCornerShape(6.dp), color = marker.first, contentColor = marker.second) {
-                    Text(line, Modifier.padding(horizontal = 7.dp, vertical = 3.dp), style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            Text(name, style = MaterialTheme.typography.titleSmall, fontFamily = JibroDisplay, fontWeight = FontWeight.Bold)
+            if (line != null) LineBadge(line, lineColor)
             content()
         }
     }
@@ -166,22 +184,29 @@ internal fun DirectionBadge(direction: String?) {
 }
 
 @Composable
-internal fun ArrivalDisplay(arrival: BoardingArrival?, loading: Boolean = false, hint: String? = null) {
+internal fun ArrivalDisplay(
+    arrival: BoardingArrival?,
+    loading: Boolean = false,
+    hint: String? = null,
+    onDetails: (() -> Unit)? = null
+) {
     val colors = MaterialTheme.colorScheme
+    if (loading) {
+        TransitLoadingCard(TransitLoadingContent.ARRIVAL)
+        return
+    }
     val live = arrival != null && !arrival.serviceEnded
     val stopCount = arrival?.stopsAway?.takeIf { it > 0 }
     val forecast = arrival?.takeIf { it.status == null }?.seconds?.takeIf { it > 0 }
-    val timeLabel = forecast?.let {
-        val minutes = it / 60
-        val seconds = it % 60
-        when {
-            minutes == 0 -> "약 ${seconds}초"
-            seconds == 0 -> "약 ${minutes}분"
-            else -> "약 ${minutes}분 ${seconds}초"
-        }
-    }
+    val timeLabel = forecast?.let(::formatArrivalDuration)
+    val openDetails = onDetails?.takeIf { live }
+    val action = if (openDetails == null) Modifier else Modifier.clickable(
+        role = Role.Button,
+        onClickLabel = "도착 상세 보기",
+        onClick = openDetails
+    )
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().then(action),
         shape = RoundedCornerShape(13.dp),
         color = if (live) colors.primaryContainer else colors.surfaceVariant,
         contentColor = if (live) colors.onPrimaryContainer else colors.onSurfaceVariant
@@ -191,21 +216,27 @@ internal fun ArrivalDisplay(arrival: BoardingArrival?, loading: Boolean = false,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             val mainLabel = when {
-                loading -> "실시간 도착 확인 중"
                 arrival == null -> "실시간 도착 정보 없음"
                 else -> arrival.status ?: timeLabel ?: if (arrival.seconds == 0) "곧 도착" else "도착 예정시간 미제공"
             }
-            if (forecast != null && !loading) {
+            if (forecast != null) {
                 Text("도착까지", style = MaterialTheme.typography.labelSmall)
             }
-            Text(
-                mainLabel,
-                style = if (forecast != null && !loading) MaterialTheme.typography.titleLarge
-                    else MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    mainLabel,
+                    modifier = Modifier.weight(1f),
+                    style = if (forecast != null) MaterialTheme.typography.titleLarge
+                        else MaterialTheme.typography.titleSmall,
+                    fontFamily = if (forecast != null || arrival?.status != null) JibroDisplay else null,
+                    fontWeight = FontWeight.Bold
+                )
+                if (openDetails != null) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                }
+            }
             val description = hint?.takeIf(String::isNotBlank) ?: arrival?.line
-            if (stopCount != null && !loading) {
+            if (stopCount != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Canvas(Modifier.size(width = 34.dp, height = 8.dp)) {
                         val radius = 2.dp.toPx()

@@ -109,6 +109,10 @@ class HomeRouteViewModel @Inject constructor(
                         visible.collectLatest { active ->
                             if (active) {
                                 while (true) {
+                                    val current = _routes.value
+                                    if (current is CommuteUiState.Ready && !current.loadingArrivals) {
+                                        _routes.value = current.copy(loadingArrivals = true)
+                                    }
                                     val arrivals = try {
                                         repository.firstArrivals(result.routes)
                                     } catch (error: CancellationException) {

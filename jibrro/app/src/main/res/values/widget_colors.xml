@@ -1,0 +1,7 @@
+<resources>
+    <color name="widget_panel">#DDE7F3</color>
+    <color name="widget_card">#FFFFFF</color>
+    <color name="widget_chip">#FFE7A3</color>
+    <color name="widget_text">#131B26</color>
+    <color name="widget_subtle">#4A5666</color>
+</resources>
