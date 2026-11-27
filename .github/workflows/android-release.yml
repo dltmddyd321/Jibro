@@ -1,0 +1,100 @@
+name: Android Release
+
+# Push a tag like v1.0.2 to upload to the internal test track.
+# Or run manually on a tag and pick another track. Production uploads are drafts:
+# roll them out from Play Console.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Play track
+        type: choice
+        default: internal
+        options: [internal, alpha, beta, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: play-release
+    defaults:
+      run:
+        working-directory: jibrro
+    env:
+      TRACK: ${{ github.event.inputs.track || 'internal' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Derive version from tag
+        run: |
+          if [[ "$GITHUB_REF_TYPE" != "tag" || ! "$GITHUB_REF_NAME" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::Run this on a tag like v1.0.2 (got $GITHUB_REF_TYPE '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          major=${BASH_REMATCH[1]}; minor=${BASH_REMATCH[2]}; patch=${BASH_REMATCH[3]}
+          if (( minor > 99 || patch > 99 )); then
+            echo "::error::minor and patch must be below 100."; exit 1
+          fi
+          code=$(( major * 10000 + minor * 100 + patch ))
+          echo "JIBRO_VERSION_NAME=$major.$minor.$patch" >> "$GITHUB_ENV"
+          echo "JIBRO_VERSION_CODE=$code" >> "$GITHUB_ENV"
+          echo "Version $major.$minor.$patch ($code) → $TRACK"
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Restore signing key and Firebase config
+        env:
+          KEYSTORE_BASE64: ${{ secrets.JIBRO_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "::error::Missing secret JIBRO_KEYSTORE_BASE64"; exit 1; }
+          test -n "$GOOGLE_SERVICES_JSON_BASE64" || { echo "::error::Missing secret GOOGLE_SERVICES_JSON_BASE64"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          echo "JIBRO_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Test and build signed bundle
+        env:
+          JIBRO_KEYSTORE_PASSWORD: ${{ secrets.JIBRO_KEYSTORE_PASSWORD }}
+          JIBRO_KEY_ALIAS: ${{ secrets.JIBRO_KEY_ALIAS }}
+          JIBRO_KEY_PASSWORD: ${{ secrets.JIBRO_KEY_PASSWORD }}
+          SUBWAY_API_KEY: ${{ secrets.SUBWAY_API_KEY }}
+          ODSAY_API_KEY: ${{ secrets.ODSAY_API_KEY }}
+          SEOUL_BUS_API_KEY: ${{ secrets.SEOUL_BUS_API_KEY }}
+          GYEONGGI_BUS_API_KEY: ${{ secrets.GYEONGGI_BUS_API_KEY }}
+        run: ./gradlew --no-daemon :app:testReleaseUnitTest :app:bundleRelease
+
+      - name: Keep the bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: jibro-${{ env.JIBRO_VERSION_NAME }}-aab
+          path: jibrro/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.windrr.jibrro
+          releaseFiles: jibrro/app/build/outputs/bundle/release/app-release.aab
+          releaseName: ${{ env.JIBRO_VERSION_NAME }}
+          track: ${{ env.TRACK }}
+          status: ${{ env.TRACK == 'production' && 'draft' || 'completed' }}
+          whatsNewDirectory: jibrro/distribution/whatsnew
+
+      - name: Remove secrets from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" app/google-services.json

@@ -16,6 +16,25 @@ val localProperties = Properties().apply {
 fun apiKey(name: String): String = providers.environmentVariable(name).orNull?.trim()
     ?: localProperties.getProperty(name).orEmpty().trim()
 
+// Release signing: environment variables (CI) or a gitignored keystore.properties (local).
+val keystoreProperties = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+}
+fun signingValue(env: String, property: String): String? =
+    providers.environmentVariable(env).orNull?.takeIf(String::isNotBlank)
+        ?: keystoreProperties.getProperty(property)?.takeIf(String::isNotBlank)
+
+val releaseStoreFile = signingValue("JIBRO_KEYSTORE_PATH", "storeFile")
+val releaseStorePassword = signingValue("JIBRO_KEYSTORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingValue("JIBRO_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingValue("JIBRO_KEY_PASSWORD", "keyPassword")
+val hasReleaseSigning = listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+    .all { it != null }
+
+// CI passes the version from the git tag; local builds keep the defaults below.
+val appVersionCode = providers.environmentVariable("JIBRO_VERSION_CODE").orNull?.toIntOrNull() ?: 6
+val appVersionName = providers.environmentVariable("JIBRO_VERSION_NAME").orNull?.takeIf(String::isNotBlank) ?: "1.0.1"
+
 val subwayApiKey = apiKey("SUBWAY_API_KEY")
 val hasSubwayApiKey = subwayApiKey.isNotBlank()
 val hasSharedFirebaseConfig = file("google-services.json").isFile
@@ -38,6 +57,11 @@ val validateReleaseConfiguration by tasks.registering {
         check(hasReleaseFirebaseConfig) {
             "Add app/google-services.json or app/src/release/google-services.json before building release."
         }
+        if (providers.environmentVariable("CI").orNull == "true") {
+            check(hasReleaseSigning) {
+                "Set JIBRO_KEYSTORE_PATH, JIBRO_KEYSTORE_PASSWORD, JIBRO_KEY_ALIAS and JIBRO_KEY_PASSWORD for CI releases."
+            }
+        }
     }
 }
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
@@ -58,8 +82,8 @@ android {
         applicationId = "com.windrr.jibrro"
         minSdk = 24
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.1"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         listOf("SUBWAY_API_KEY", "ODSAY_API_KEY", "SEOUL_BUS_API_KEY", "GYEONGGI_BUS_API_KEY").forEach { name ->
@@ -68,9 +92,21 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
