@@ -8,7 +8,7 @@ plugins {
 kotlin {
     androidLibrary {
         namespace = "com.windrr.jibrro.shared"
-        compileSdk = 35
+        compileSdk = 36
         minSdk = 24
         compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
     }
