@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -92,6 +91,10 @@ internal fun LazyListScope.homeRouteItems(
         is CommuteUiState.Error -> item(key = "commute-status") { RouteMessage(state.message, onRetry = onRefresh) }
         is CommuteUiState.Empty -> item(key = "commute-status") { RouteMessage(state.message, onRetry = onRefresh) }
         is CommuteUiState.Ready -> {
+            val ranked = rankRoutes(state.routes, state.arrivals)
+            val arrivalFirst = ranked.firstOrNull()?.badge.let {
+                it == RouteBadge.SOONEST || it == RouteBadge.SOONEST_AND_SHORTEST
+            }
             item(key = "commute-heading") {
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),
@@ -105,19 +108,17 @@ internal fun LazyListScope.homeRouteItems(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "예상 소요시간순",
+                        if (arrivalFirst) "먼저 도착 우선" else "예상 소요시간순",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            val ordered = state.routes.sortedBy { state.arrivals[it]?.serviceEnded == true }
-            itemsIndexed(ordered) { index, route ->
+            items(ranked) { (route, badge) ->
                 val arrival = state.arrivals[route]
                 RouteCard(
                     route,
-                    isFastest = index == 0 && (!state.loadingArrivals || state.arrivals.isNotEmpty()) &&
-                        arrival?.serviceEnded != true,
+                    badge = badge,
                     arrival = arrival,
                     loadingArrival = state.loadingArrivals && arrival == null,
                     onArrivalDetails = onArrivalDetails
@@ -266,7 +267,7 @@ private fun RouteMessage(text: String, onRetry: (() -> Unit)? = null) {
 @Composable
 private fun RouteCard(
     route: CommuteRoute,
-    isFastest: Boolean,
+    badge: RouteBadge?,
     arrival: BoardingArrival?,
     loadingArrival: Boolean,
     onArrivalDetails: ((ArrivalDetails) -> Unit)?
@@ -275,12 +276,13 @@ private fun RouteCard(
     val colors = MaterialTheme.colorScheme
     val modes = route.rides.map { it.mode }.distinct().joinToString(" + ") { it.label }
     val transfers = if (route.transfers == 0) "환승 없음" else "환승 ${route.transfers}회"
+    val isLead = badge == RouteBadge.SOONEST || badge == RouteBadge.SOONEST_AND_SHORTEST
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = colors.surface,
-        border = BorderStroke(if (isFastest) 1.5.dp else 1.dp, if (isFastest) colors.primary else colors.outlineVariant)
+        border = BorderStroke(if (isLead) 1.5.dp else 1.dp, if (isLead) colors.primary else colors.outlineVariant)
     ) {
         Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(
@@ -289,22 +291,13 @@ private fun RouteCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    if (isFastest) {
-                        Surface(shape = RoundedCornerShape(5.dp), color = Signage.SafetyYellow, contentColor = Signage.OnSafetyYellow) {
-                            Text(
-                                "가장 빠른 경로",
-                                Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    if (badge != null) RouteBadgeTag(badge)
                     Text("${modes} · ${transfers}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 Surface(
                     shape = RoundedCornerShape(11.dp),
-                    color = if (isFastest) colors.primary else colors.surfaceVariant,
-                    contentColor = if (isFastest) colors.onPrimary else colors.onSurfaceVariant
+                    color = if (isLead) colors.primary else colors.surfaceVariant,
+                    contentColor = if (isLead) colors.onPrimary else colors.onSurfaceVariant
                 ) {
                     Text(
                         "약 ${route.minutes}분",
@@ -363,6 +356,25 @@ private fun RouteCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun RouteBadgeTag(badge: RouteBadge) {
+    val colors = MaterialTheme.colorScheme
+    val lead = badge != RouteBadge.SHORTEST
+    Surface(
+        shape = RoundedCornerShape(5.dp),
+        color = if (lead) Signage.SafetyYellow else colors.surface,
+        contentColor = if (lead) Signage.OnSafetyYellow else colors.primary,
+        border = if (lead) null else BorderStroke(1.dp, colors.primary)
+    ) {
+        Text(
+            badge.label,
+            Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
